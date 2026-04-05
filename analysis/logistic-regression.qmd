@@ -46,13 +46,15 @@ df <- df_raw |>
     sex = factor(sex, levels = c("Male", "Female")),
 
     race_ethnicity = factor(race_ethnicity,
-                            levels = c("NH White", "NH Black", "NH AIAN", "NH Asian",
-                                       "NH NHOPI", "NH Other/Multiracial",
-                                       "Hispanic", "NH Other")),
+                            levels = c("White", "Black",
+                                       "American Indian/Alaskan Native",
+                                       "Asian", "Pacific Islander",
+                                       "Other/Multiracial",
+                                       "Hispanic", "Other")),
 
     education = factor(education,
-                       levels = c("Graduated college", "Some college",
-                                  "Graduated HS", "Did not graduate HS")),
+                       levels = c("College graduate", "Some college",
+                                  "High school graduate", "Did not graduate high school")),
 
     income_group = factor(income_group,
                           levels = c(">$100k", "$50k-$100k", "$35k-$50k",
