@@ -1,0 +1,171 @@
+---
+title: "{{< var study_title >}}"
+subtitle: "Exploratory Data Analysis"
+---
+
+## Setup
+
+```{r}
+#| label: setup
+#| collapse: true
+#| code-summary: "Load packages and helpers"
+
+source(here::here("R", "setup.R"))
+```
+
+---
+
+## Data Import
+
+```{r}
+#| label: import
+#| collapse: true
+
+df <- read_parquet(here("data", "processed", "analysis_dataset.parquet"))
+dim(df)
+names(df)
+```
+
+---
+
+## Sample Characteristics
+
+### Outcome prevalence
+
+```{r}
+#| label: outcome-prevalence
+#| collapse: true
+
+df |>
+  count(diabetes) |>
+  mutate(pct = round(n / sum(n) * 100, 1))
+```
+
+### Table 1 — sample characteristics by diabetes status
+
+```{r}
+#| label: table-one
+
+df |>
+  select(
+    diabetes,
+    age_group, sex, race_ethnicity, education, income_group,
+    bmi_category, physically_active, smoking_status,
+    heavy_drinker, has_provider, mental_health_days
+  ) |>
+  mutate(diabetes = factor(diabetes, levels = c(0, 1), labels = c("No diabetes", "Diabetes"))) |>
+  tbl_summary(
+    by      = diabetes,
+    missing = "no"
+  ) |>
+  add_p() |>
+  add_overall() |>
+  bold_p(t = 0.05) |>
+  bold_labels()
+```
+
+---
+
+## Outcome Prevalence by Subgroup
+
+```{r}
+#| label: prevalence-by-subgroup
+#| fig-cap: "Crude diabetes prevalence by key predictor categories"
+#| fig-height: 10
+
+# Categorical predictors only
+cat_vars <- c("age_group", "sex", "race_ethnicity", "education",
+              "income_group", "bmi_category", "smoking_status",
+              "mental_health_days")
+
+prev_data <- purrr::map_dfr(cat_vars, function(v) {
+  df |>
+    filter(!is.na(.data[[v]])) |>
+    group_by(variable = v, level = .data[[v]]) |>
+    summarise(
+      n        = n(),
+      cases    = sum(diabetes),
+      prev_pct = mean(diabetes) * 100,
+      .groups  = "drop"
+    )
+})
+
+ggplot(prev_data, aes(x = prev_pct, y = reorder(level, prev_pct), fill = variable)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = paste0(round(prev_pct, 1), "%")),
+            hjust = -0.1, size = 3) +
+  facet_wrap(~variable, scales = "free_y", ncol = 2) +
+  scale_fill_epi() +
+  labs(x = "Diabetes prevalence (%)", y = NULL,
+       title = "Crude diabetes prevalence by predictor category") +
+  xlim(0, max(prev_data$prev_pct) * 1.2)
+```
+
+---
+
+## Unadjusted Associations
+
+```{r}
+#| label: uvregression
+
+df |>
+  mutate(
+    diabetes          = factor(diabetes, levels = c(0, 1)),
+    age_group         = factor(age_group,
+                               levels = c("18-34", "35-44", "45-54", "55-64", "65-74", "75+")),
+    sex               = factor(sex, levels = c("Male", "Female")),
+    race_ethnicity    = factor(race_ethnicity, levels = c("NH White", "NH Black", "NH AIAN",
+                                                          "NH Asian", "NH NHOPI",
+                                                          "NH Other/Multiracial",
+                                                          "Hispanic", "NH Other")),
+    education         = factor(education,
+                               levels = c("Graduated college", "Some college",
+                                          "Graduated HS", "Did not graduate HS")),
+    income_group      = factor(income_group,
+                               levels = c(">$100k", "$50k-$100k", "$35k-$50k",
+                                          "$25k-$35k", "$15k-$25k", "<$15k")),
+    bmi_category      = factor(bmi_category,
+                               levels = c("Normal", "Underweight", "Overweight", "Obese")),
+    smoking_status    = factor(smoking_status,
+                               levels = c("Never", "Former", "Current (some days)", "Current (daily)")),
+    mental_health_days = factor(mental_health_days,
+                                levels = c("0 days", "1-13 days", "14+ days"))
+  ) |>
+  select(
+    diabetes,
+    age_group, sex, race_ethnicity, education, income_group,
+    bmi_category, physically_active, smoking_status,
+    heavy_drinker, has_provider, mental_health_days
+  ) |>
+  tbl_uvregression(
+    method       = glm,
+    y            = diabetes,
+    method.args  = list(family = binomial),
+    exponentiate = TRUE,
+    estimate_fun = \(x) style_sigfig(x, digits = 3)
+  ) |>
+  bold_p(t = 0.05) |>
+  bold_labels()
+```
+
+---
+
+## Missingness
+
+```{r}
+#| label: missingness
+
+miss_summary(df)
+```
+
+---
+
+## Session Info
+
+```{r}
+#| label: session-info
+#| collapse: true
+#| code-summary: "R session info"
+
+sessionInfo()
+```

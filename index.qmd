@@ -1,0 +1,35 @@
+---
+title: "{{< var study_title >}}"
+format:
+  html:
+    toc: false
+    number-sections: false
+---
+
+This project uses the 2024 Behavioral Risk Factor Surveillance System (BRFSS) — the largest continuously conducted health telephone survey in the world, with 457,670 respondents across 49 states, DC, and US territories — to model the odds of a diabetes diagnosis as a function of demographic, behavioural, and social determinant predictors in a nationally representative US adult sample.
+
+The project is organised into three parts:
+
+---
+
+## Overview
+
+A concise summary of the analysis, headline odds ratios, and the most important visualisations.
+
+↗ [Open Overview »](analysis/overview.qmd)
+
+---
+
+## Exploratory Data Analysis
+
+Sample characteristics, variable distributions, outcome prevalence by subgroup, and unadjusted associations.
+
+↗ [Open EDA »](analysis/eda.qmd)
+
+---
+
+## Logistic Regression
+
+Full model specification, complete case exclusions, VIF checks, diagnostics, ROC/AUC, Hosmer-Lemeshow, and the OR table.
+
+↗ [Open Regression »](analysis/logistic-regression.qmd)

@@ -1,0 +1,64 @@
+---
+title: "{{< var study_title >}}"
+subtitle: "Overview — Key Findings"
+---
+
+> **Dataset:** {{< var dataset >}}, n = {{< var dataset_n >}} respondents, 49 states + DC + territories.
+> **Outcome:** {{< var primary_outcome >}}.
+> **Method:** Multiple logistic regression.
+
+## Setup
+
+```{r}
+#| label: setup
+#| collapse: true
+#| code-summary: "Load packages and helpers"
+
+source(here::here("R", "setup.R"))
+```
+
+---
+
+## Data Import
+
+```{r}
+#| label: import
+
+df <- read_parquet(here("data", "processed", "analysis_dataset.parquet"))
+```
+
+---
+
+## Sample Overview
+
+```{r}
+#| label: sample-size
+
+cat("Analytical sample (complete cases on outcome):", nrow(df), "\n")
+cat("Diabetes cases:", sum(df$diabetes), "\n")
+cat("Prevalence:    ", round(mean(df$diabetes) * 100, 1), "%\n")
+```
+
+---
+
+## Headline Findings
+
+> *(Populate after running `logistic-regression.qmd`.)*
+
+---
+
+## Key Visualisations
+
+> *(Add OR forest plot and any key figures here once the model is complete.)*
+
+---
+
+## Session Info
+
+```{r}
+#| label: session-info
+#| collapse: true
+#| code-summary: "R session info"
+
+sessionInfo()
+```

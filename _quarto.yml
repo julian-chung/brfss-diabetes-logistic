@@ -1,0 +1,35 @@
+project:
+  type: website
+  output-dir: output
+
+website:
+  title: "BRFSS Diabetes Logistic Regression"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: analysis/overview.qmd
+        text: Overview
+      - href: analysis/eda.qmd
+        text: EDA
+      - href: analysis/logistic-regression.qmd
+        text: Regression
+
+execute:
+  warning: false
+  message: false
+  echo: true
+
+format:
+  html:
+    theme:
+      light: [cosmo, assets/styles.css]
+      dark: [darkly, assets/styles-dark.css]
+    toc: true
+    toc-location: right
+    number-sections: true
+    code-fold: true
+    code-tools: true
+    fig-width: 8
+    fig-height: 6
+    df-print: paged

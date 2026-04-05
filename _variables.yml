@@ -1,0 +1,32 @@
+# _variables.yml
+# Project-wide variables referenced in QMD files as {{< var field >}}
+# -----------------------------------------------------------------------
+
+# --- Study identity -------------------------------------------------------
+study_title: "Logistic Regression: Social Determinants of Diabetes Diagnosis in U.S. Adults"
+study_short: "BRFSS-2024"
+irb_number: "N/A — public dataset"
+irb_institution: "CDC / BRFSS"
+
+# --- Personnel ------------------------------------------------------------
+pi_name: "Julian Chung"
+pi_email: ""
+analyst_name: "Julian Chung"
+analyst_email: ""
+statistician_name: "Julian Chung"
+
+# --- Dates ----------------------------------------------------------------
+enrollment_start: "N/A"
+enrollment_end: "N/A"
+data_cutoff: "2024"
+report_date: "2026-04-05"
+
+# --- Data source ----------------------------------------------------------
+dataset: "CDC Behavioral Risk Factor Surveillance System (BRFSS) 2024"
+dataset_n: "457,670"
+dataset_vars: "345"
+
+# --- Analysis -------------------------------------------------------------
+primary_outcome: "Ever diagnosed with diabetes (binary)"
+significance_level: 0.05
+confidence_level: 0.95

@@ -1,0 +1,276 @@
+---
+title: "{{< var study_title >}}"
+subtitle: "Logistic Regression — Social Determinants of Diabetes"
+---
+
+## Setup
+
+```{r}
+#| label: setup
+#| collapse: true
+#| code-summary: "Load packages and helpers"
+
+source(here::here("R", "setup.R"))
+library(car)              # vif()
+library(performance)      # check_model(), check_collinearity()
+library(pROC)             # roc(), auc(), ggroc()
+library(ResourceSelection) # hoslem.test()
+```
+
+---
+
+## Data Import
+
+```{r}
+#| label: import
+
+df_raw <- read_parquet(here("data", "processed", "analysis_dataset.parquet"))
+cat("Rows in analytical dataset:", nrow(df_raw), "\n")
+```
+
+---
+
+## Data Preparation
+
+```{r}
+#| label: prep-factors
+#| code-summary: "Set factor levels and reference categories"
+
+df <- df_raw |>
+  mutate(
+    diabetes = factor(diabetes, levels = c(0, 1), labels = c("No", "Yes")),
+
+    age_group = factor(age_group,
+                       levels = c("18-34", "35-44", "45-54", "55-64", "65-74", "75+")),
+
+    sex = factor(sex, levels = c("Male", "Female")),
+
+    race_ethnicity = factor(race_ethnicity,
+                            levels = c("NH White", "NH Black", "NH AIAN", "NH Asian",
+                                       "NH NHOPI", "NH Other/Multiracial",
+                                       "Hispanic", "NH Other")),
+
+    education = factor(education,
+                       levels = c("Graduated college", "Some college",
+                                  "Graduated HS", "Did not graduate HS")),
+
+    income_group = factor(income_group,
+                          levels = c(">$100k", "$50k-$100k", "$35k-$50k",
+                                     "$25k-$35k", "$15k-$25k", "<$15k")),
+
+    bmi_category = factor(bmi_category,
+                          levels = c("Normal", "Underweight", "Overweight", "Obese")),
+
+    physically_active = factor(physically_active, levels = c(1, 0),
+                               labels = c("Active", "Inactive")),
+
+    smoking_status = factor(smoking_status,
+                            levels = c("Never", "Former",
+                                       "Current (some days)", "Current (daily)")),
+
+    heavy_drinker = factor(heavy_drinker, levels = c(0, 1),
+                           labels = c("No", "Yes")),
+
+    has_provider = factor(has_provider, levels = c(1, 0),
+                          labels = c("Has provider", "No provider")),
+
+    mental_health_days = factor(mental_health_days,
+                               levels = c("0 days", "1-13 days", "14+ days"))
+  )
+```
+
+### Complete case exclusions
+
+```{r}
+#| label: complete-cases
+#| collapse: true
+
+predictor_cols <- c(
+  "age_group", "sex", "race_ethnicity", "education", "income_group",
+  "bmi_category", "physically_active", "smoking_status",
+  "heavy_drinker", "has_provider", "mental_health_days"
+)
+
+n_before <- nrow(df)
+df_cc <- df |> drop_na(all_of(predictor_cols))
+n_after  <- nrow(df_cc)
+
+cat("Before complete case exclusion:", n_before, "\n")
+cat("After complete case exclusion: ", n_after,  "\n")
+cat("Excluded:                      ", n_before - n_after, "\n")
+cat("Retained (%):                  ", round(n_after / n_before * 100, 1), "%\n")
+```
+
+---
+
+## Model
+
+### Formula
+
+```{r}
+#| label: model-formula
+
+f <- formula(
+  diabetes ~
+    age_group + sex + race_ethnicity +
+    education + income_group + has_provider +
+    bmi_category + physically_active + smoking_status +
+    heavy_drinker + mental_health_days
+)
+f
+```
+
+### Fit
+
+```{r}
+#| label: model-fit
+#| collapse: true
+
+mod <- glm(f, data = df_cc, family = binomial(link = "logit"))
+summary(mod)
+```
+
+### Multicollinearity — VIF
+
+```{r}
+#| label: model-vif
+#| collapse: true
+
+vif(mod)
+```
+
+### Diagnostics
+
+```{r}
+#| label: model-diagnostics
+#| fig-width: 10
+#| fig-height: 9
+
+check_model(mod)
+```
+
+---
+
+## Model Performance
+
+### ROC curve and AUC
+
+```{r}
+#| label: model-roc
+#| fig-cap: "ROC curve — full social determinants model"
+#| fig-width: 6
+#| fig-height: 6
+
+roc_obj <- roc(
+  response  = as.integer(df_cc$diabetes) - 1L,
+  predictor = fitted(mod),
+  quiet     = TRUE
+)
+
+ggroc(roc_obj, color = palette_epi["vermillion"], linewidth = 1) +
+  geom_abline(slope = -1, intercept = 1, linetype = "dashed", color = "grey60") +
+  annotate("text", x = 0.35, y = 0.1,
+           label = paste0("AUC = ", round(auc(roc_obj), 3)),
+           size  = 4.5) +
+  labs(title = "ROC Curve — Full Model", x = "Specificity", y = "Sensitivity")
+```
+
+### Base demographic model vs full SDoH model — AUC comparison
+
+```{r}
+#| label: model-auc-comparison
+#| collapse: true
+
+mod_base <- glm(
+  diabetes ~ age_group + sex + race_ethnicity,
+  data   = df_cc,
+  family = binomial
+)
+
+roc_base <- roc(
+  response  = as.integer(df_cc$diabetes) - 1L,
+  predictor = fitted(mod_base),
+  quiet     = TRUE
+)
+
+cat("Base model AUC (age + sex + race): ", round(auc(roc_base), 3), "\n")
+cat("Full model AUC (all predictors):   ", round(auc(roc_obj),  3), "\n")
+```
+
+### Hosmer-Lemeshow goodness of fit
+
+```{r}
+#| label: model-hosmer-lemeshow
+#| collapse: true
+
+hl <- hoslem.test(as.integer(df_cc$diabetes) - 1L, fitted(mod), g = 10)
+print(hl)
+# p > 0.05 indicates adequate fit
+```
+
+---
+
+## Results
+
+### Multivariable odds ratio table
+
+```{r}
+#| label: results-table
+
+tbl_regression(
+  mod,
+  exponentiate = TRUE,
+  estimate_fun = \(x) style_sigfig(x, digits = 3)
+) |>
+  bold_p(t = 0.05) |>
+  bold_labels() |>
+  add_n()
+```
+
+### Univariable ORs
+
+```{r}
+#| label: results-univariable
+
+df_cc |>
+  select(diabetes, age_group, sex, race_ethnicity, education, income_group,
+         bmi_category, physically_active, smoking_status,
+         heavy_drinker, has_provider, mental_health_days) |>
+  tbl_uvregression(
+    method       = glm,
+    y            = diabetes,
+    method.args  = list(family = binomial),
+    exponentiate = TRUE,
+    estimate_fun = \(x) style_sigfig(x, digits = 3)
+  ) |>
+  bold_p(t = 0.05) |>
+  bold_labels()
+```
+
+### Tidy coefficients
+
+```{r}
+#| label: results-tidy
+#| collapse: true
+
+tidy(mod, conf.int = TRUE, exponentiate = TRUE) |>
+  mutate(across(where(is.numeric), \(x) round(x, 4)))
+```
+
+---
+
+## Conclusions / Notes
+
+> *(Interpret key ORs in a public health context, note model limitations — separation in small race/ethnicity subgroups, unweighted analysis, cross-sectional design.)*
+
+---
+
+## Session Info
+
+```{r}
+#| label: session-info
+#| collapse: true
+#| code-summary: "R session info"
+
+sessionInfo()
+```
