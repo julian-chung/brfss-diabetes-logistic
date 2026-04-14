@@ -3,6 +3,10 @@ title: "{{< var study_title >}}"
 subtitle: "Logistic Regression — Social Determinants of Diabetes"
 ---
 
+This notebook estimates adjusted associations between diabetes status and a set of demographic, socioeconomic, and behavioural predictors using multivariable logistic regression.
+
+The data come from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a nationally representative telephone survey of U.S. adults conducted annually by the CDC. The analysis examines whether these factors remain associated with diabetes status after adjustment for confounding.
+
 ## Setup
 
 ```{r}
@@ -10,12 +14,26 @@ subtitle: "Logistic Regression — Social Determinants of Diabetes"
 #| collapse: true
 #| code-summary: "Load packages and helpers"
 
-source(here::here("R", "setup.R"))
-library(car)              # vif()
-library(performance)      # check_model(), check_collinearity()
-library(pROC)             # roc(), auc(), ggroc()
-library(ResourceSelection) # hoslem.test()
+library(here)
+library(tidyverse)
+library(arrow)
+library(gtsummary)
+library(janitor)
+library(broom)            # tidy() — extract model coefficients as a data frame
+library(car)              # vif() — variance inflation factors
+library(performance)      # check_model() — visual diagnostic plots
+library(see)              # plotting backend for performance
+library(patchwork)        # plot composition and annotation
+library(pROC)             # roc(), auc(), ggroc() — ROC curve and AUC
+library(ResourceSelection) # hoslem.test() — Hosmer-Lemeshow goodness-of-fit
+
+source(here("R", "utils.R"))
+source(here("R", "plot_theme.R"))
 ```
+
+`car` checks multicollinearity via variance inflation factors, and `performance` provides diagnostic plots to assess overall model behaviour. `pROC` evaluates discrimination through the ROC curve and AUC, and `ResourceSelection` provides the Hosmer-Lemeshow test as a basic check of calibration across risk strata.
+
+Model estimates are extracted with `broom` and presented using `gtsummary` for consistent reporting.
 
 ---
 
@@ -23,14 +41,21 @@ library(ResourceSelection) # hoslem.test()
 
 ```{r}
 #| label: import
+#| collapse: true
 
 df_raw <- read_parquet(here("data", "processed", "analysis_dataset.parquet"))
-cat("Rows in analytical dataset:", nrow(df_raw), "\n")
+cat("Rows:", nrow(df_raw), "| Columns:", ncol(df_raw), "\n")
 ```
+
+The analytical dataset is produced by the SQL pipeline from the raw 2024 BRFSS XPT file. Respondents with a missing or ambiguous diabetes response are excluded at the SQL stage, so all `r format(nrow(df_raw), big.mark = ",")` rows carry a definitive binary outcome. No further row-level exclusions are applied until the complete-case step in Data Preparation.
 
 ---
 
 ## Data Preparation
+
+### Factor levels and reference categories
+
+Reference categories determine the comparison group for each odds ratio. We set these to substantively meaningful baselines — typically the lowest-risk or most socioeconomically advantaged group — so that estimated effects reflect higher risk relative to a favourable exposure level, making the direction of associations intuitive.
 
 ```{r}
 #| label: prep-factors
@@ -77,11 +102,15 @@ df <- df_raw |>
                           labels = c("Has provider", "No provider")),
 
     mental_health_days = factor(mental_health_days,
-                               levels = c("0 days", "1-13 days", "14+ days"))
+                                levels = c("0 days", "1-13 days", "14+ days"))
   )
 ```
 
-### Complete case exclusions
+The first level of each factor becomes the reference category under R’s default treatment coding. This choice affects how contrasts are expressed, but does not change overall model fit.
+
+### Complete-case exclusions
+
+`glm()` requires no missing values. Rows with a missing value on any predictor are dropped here, and the retained dataset `df_cc` is used for all subsequent modelling.
 
 ```{r}
 #| label: complete-cases
@@ -94,71 +123,284 @@ predictor_cols <- c(
 )
 
 n_before <- nrow(df)
-df_cc <- df |> drop_na(all_of(predictor_cols))
+df_cc    <- df |> drop_na(all_of(predictor_cols))
 n_after  <- nrow(df_cc)
 
-cat("Before complete case exclusion:", n_before, "\n")
-cat("After complete case exclusion: ", n_after,  "\n")
-cat("Excluded:                      ", n_before - n_after, "\n")
-cat("Retained (%):                  ", round(n_after / n_before * 100, 1), "%\n")
+cat("Before:", n_before, "| After:", n_after, "| Excluded:", n_before - n_after,
+    "(", round((n_before - n_after) / n_before * 100, 1), "%)\n")
 ```
+
+`r round((nrow(df) - nrow(df_cc)) / nrow(df) * 100, 1)`% of respondents are excluded, largely due to the 25.5% income-group missingness identified in the EDA. The reason for this missingness is unknown; if lower-income respondents are more likely to skip the question, the estimated income gradient may be attenuated under complete-case analysis, while the opposite pattern would bias estimates in the other direction. This is the main limitation of the complete-case specification in this model.
 
 ---
 
-## Model
+## Model Specification
 
-### Formula
+The outcome — diabetes diagnosis — is binary, so logistic regression is used to model the log-odds of the outcome as a function of the predictors. Coefficients are exponentiated and reported as odds ratios (ORs), the standard effect measure for cross-sectional analyses of this type.
+
+All 11 predictors are entered simultaneously rather than selected stepwise. Stepwise procedures can improve apparent fit in-sample but tend to produce unstable estimates and inflated Type I error. The aim here is to estimate the adjusted association of each predictor with diabetes status, so a theory-driven full model is preferred.
+
+The model includes three demographic predictors (age, sex, race/ethnicity), two socioeconomic predictors (education and income), one access-to-care predictor (having a personal doctor), and five behavioural and clinical predictors (BMI, physical activity, smoking, alcohol use, and mental health).
 
 ```{r}
 #| label: model-formula
 
-f <- formula(
+model_formula <- formula(
   diabetes ~
     age_group + sex + race_ethnicity +
     education + income_group + has_provider +
     bmi_category + physically_active + smoking_status +
     heavy_drinker + mental_health_days
 )
-f
+model_formula
 ```
 
-### Fit
+We are using an associational model fit to cross-sectional data, so it estimates adjusted odds rather than causal effects. Diabetes status and the predictors are measured at the same point in time, so the direction of causality cannot be established from this data alone.
+
+---
+
+## Model Fitting
+
+The specified logistic regression model is fit to the complete-case dataset.
 
 ```{r}
 #| label: model-fit
 #| collapse: true
 
-mod <- glm(f, data = df_cc, family = binomial(link = "logit"))
-summary(mod)
+mod <- glm(model_formula, data = df_cc, family = binomial(link = "logit"))
+
+cat("Converged:", mod$converged, "\n")
+glance(mod)
 ```
+
+The model converged successfully. The reduction in deviance relative to the null model indicates that the predictors collectively improve model fit. Adjusted associations are interpreted in the Results section, after diagnostic checks.
+
+---
+
+## Assumption Checks
+
+Model fit alone does not guarantee reliable estimates, so key assumptions are checked before interpreting coefficients.
 
 ### Multicollinearity — VIF
 
+Highly correlated predictors inflate standard errors and make individual coefficients unstable, even when overall model fit is acceptable. Variance inflation factors (VIFs) quantify this inflation for each predictor.
+
 ```{r}
-#| label: model-vif
+#| label: assumption-vif
 #| collapse: true
 
 vif(mod)
 ```
 
-### Diagnostics
+Because several predictors are multi-level categorical variables, `car::vif()` reports generalized VIFs (GVIF). The adjusted values, GVIF^(1/(2·Df)), are all below 1.05 — well under the conventional threshold of 2 — indicating no meaningful collinearity.
+
+Income and education show slightly higher values than the other predictors, consistent with their expected correlation in the population, but neither approaches a level that would inflate standard errors or destabilise coefficient estimates.
+
+### Model diagnostics
+
+Three diagnostic panels assess model fit, influential observations, and collinearity before interpreting coefficients.
 
 ```{r}
-#| label: model-diagnostics
+#| label: assumption-diagnostics
 #| fig-width: 10
 #| fig-height: 9
 
-check_model(mod)
+cm <- check_model(mod, check = c("binned_residuals", "outliers", "vif"),
+                  residual_type = "normal")
+
+diag_plot <- plot(cm) &
+  theme(
+    plot.title    = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    axis.title    = element_text(size = 8),
+    plot.margin   = margin(t = 8, r = 8, b = 8, l = 8)
+  )
+
+diag_plot[[3]] <- diag_plot[[3]] +
+  theme(
+    plot.subtitle = element_text(size = 10, hjust = 0.5, margin = margin(b = 10, l = 60)),
+    axis.text.x   = element_text(angle = 45, hjust = 1, vjust = 1, size = 7.5),
+    plot.margin   = margin(t = 8, r = 8, b = 18, l = 8)
+  )
+
+diag_plot +
+  patchwork::plot_annotation(
+    title = "Model Diagnostic Checks",
+    theme = theme(
+      plot.title  = element_text(size = 16, face = "bold", hjust = 0.5),
+      plot.margin = margin(t = 14, b = 8)
+    )
+  )
 ```
+
+The binned residuals plot shows systematic deviation outside the error bounds, with residuals consistently negative across the predicted probability range. The model overpredicts diabetes probability across most of the risk distribution, indicating that the linear functional form does not fully capture the relationship between the predictors and the log-odds of the outcome.
+
+This pattern is consistent with non-linear associations in key predictors — particularly age, BMI, and mental health days — and the absence of interaction terms in the current specification. No influential observations are identified in the Cook's distance panel, as expected given the sample size.
+
+This misfit does not invalidate the model, but it suggests that effect estimates should be interpreted with caution.
+
+---
+
+## Results
+
+### Adjusted odds ratios
+
+The primary result of this analysis is the set of adjusted ORs from the full multivariable model — the estimated odds of diabetes for each predictor level, holding all other predictors constant.
+
+```{r}
+#| label: results-adjusted
+
+tbl_regression(
+  mod,
+  exponentiate = TRUE,
+  estimate_fun = \(x) style_sigfig(x, digits = 3),
+  label = list(
+    age_group          ~ "Age group",
+    sex                ~ "Sex",
+    race_ethnicity     ~ "Race/ethnicity",
+    education          ~ "Education",
+    income_group       ~ "Household income",
+    bmi_category       ~ "BMI category",
+    physically_active  ~ "Physically active",
+    smoking_status     ~ "Smoking status",
+    heavy_drinker      ~ "Heavy drinker",
+    has_provider       ~ "Has personal doctor",
+    mental_health_days ~ "Poor mental health days"
+  )
+) |>
+  bold_p(t = 0.05) |>
+  bold_labels() |>
+  modify_caption("**Table 1.** Adjusted odds ratios - full social determinants model")
+```
+
+The adjusted model shows the strongest associations for BMI and age, with obesity and older age groups carrying substantially higher odds of diabetes than their reference categories. Lower income groups also retain elevated odds after adjustment, indicating that the socioeconomic gradient is not fully explained by the behavioural and clinical predictors in the model. Several smaller effects remain directionally consistent with the EDA, though their magnitude and precision vary once the predictors are considered jointly.
+
+### Forest plot
+
+A visual complement to Table 2. Each point is the adjusted OR for that predictor level; horizontal bars are 95% confidence intervals. The dashed line at OR = 1 is the null (no association). Note the log scale on the x-axis — equal distances represent equal multiplicative changes in odds.
+
+```{r}
+#| label: results-forest
+#| fig-cap: "Adjusted ORs with 95% CIs — full social determinants model"
+#| fig-width: 10
+#| fig-height: 12
+
+predictor_names <- c(
+  "age_group", "sex", "race_ethnicity", "education", "income_group",
+  "has_provider", "bmi_category", "physically_active", "smoking_status",
+  "heavy_drinker", "mental_health_days"
+)
+
+var_labels <- c(
+  age_group          = "Age group",
+  sex                = "Sex",
+  race_ethnicity     = "Race/ethnicity",
+  education          = "Education",
+  income_group       = "Household income",
+  has_provider       = "Has personal doctor",
+  bmi_category       = "BMI category",
+  physically_active  = "Physically active",
+  smoking_status     = "Smoking status",
+  heavy_drinker      = "Heavy drinker",
+  mental_health_days = "Poor mental health days"
+)
+
+forest_data <- tidy(mod, conf.int = TRUE, exponentiate = TRUE) |>
+  filter(term != "(Intercept)") |>
+  mutate(
+    variable = str_extract(term, str_c("^(", str_c(predictor_names, collapse = "|"), ")")),
+    label    = str_remove(term, variable),
+    variable = factor(variable, levels = predictor_names)
+  ) |>
+  arrange(variable)
+
+ggplot(forest_data,
+       aes(x = estimate,
+           y = fct_rev(factor(term, levels = unique(term))),
+           xmin = conf.low, xmax = conf.high)) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "grey50") +
+  geom_pointrange(color = palette_epi[["blue"]], size = 0.4) +
+  facet_wrap(~variable, scales = "free_y", ncol = 2,
+             labeller = as_labeller(var_labels)) +
+  scale_x_log10() +
+  scale_y_discrete(labels = \(x) forest_data$label[match(x, forest_data$term)]) +
+  labs(x = "Odds Ratio (log scale)", y = NULL,
+       title = "Adjusted odds ratios — full social determinants model")
+```
+
+The forest plot makes the relative scale of the adjusted effects easier to read across predictors. Terms with confidence intervals well clear of OR = 1 show the most stable evidence of association, while intervals that cross the null indicate estimates that are either weak, imprecise, or both. The wider intervals for some smaller subgroups are consistent with the uneven sample composition seen in the EDA.
+
+### Unadjusted vs adjusted comparison
+
+Comparing unadjusted (crude) and adjusted ORs reveals confounding: predictors whose ORs change substantially after adjustment were sharing variance with other predictors. This is the central inferential step in an observational epidemiological analysis.
+
+```{r}
+#| label: results-comparison
+
+tbl_uv <- df_cc |>
+  select(diabetes, all_of(predictor_cols)) |>
+  tbl_uvregression(
+    method       = glm,
+    y            = diabetes,
+    method.args  = list(family = binomial),
+    exponentiate = TRUE,
+    estimate_fun = \(x) style_sigfig(x, digits = 3),
+    label = list(
+      age_group          ~ "Age group",
+      sex                ~ "Sex",
+      race_ethnicity     ~ "Race/ethnicity",
+      education          ~ "Education",
+      income_group       ~ "Household income",
+      bmi_category       ~ "BMI category",
+      physically_active  ~ "Physically active",
+      smoking_status     ~ "Smoking status",
+      heavy_drinker      ~ "Heavy drinker",
+      has_provider       ~ "Has personal doctor",
+      mental_health_days ~ "Poor mental health days"
+    )
+  ) |>
+  bold_p(t = 0.05)
+
+tbl_mv <- tbl_regression(
+  mod,
+  exponentiate = TRUE,
+  estimate_fun = \(x) style_sigfig(x, digits = 3),
+  label = list(
+    age_group          ~ "Age group",
+    sex                ~ "Sex",
+    race_ethnicity     ~ "Race/ethnicity",
+    education          ~ "Education",
+    income_group       ~ "Household income",
+    bmi_category       ~ "BMI category",
+    physically_active  ~ "Physically active",
+    smoking_status     ~ "Smoking status",
+    heavy_drinker      ~ "Heavy drinker",
+    has_provider       ~ "Has personal doctor",
+    mental_health_days ~ "Poor mental health days"
+  )
+) |>
+  bold_p(t = 0.05)
+
+tbl_merge(
+  list(tbl_uv, tbl_mv),
+  tab_spanner = c("**Unadjusted OR**", "**Adjusted OR**")
+) |>
+  bold_labels() |>
+  modify_caption("**Table 2.** Unadjusted and adjusted odds ratios")
+```
+
+The crude-to-adjusted comparison shows where the apparent strength of association changes once the predictors are considered together. In this model, attenuation in some socioeconomic and behavioural terms is consistent with confounding by age, BMI, and related factors, while the persistence of the age and BMI effects suggests those associations are more robust to adjustment. This comparison is more informative than either table alone because it shows where the unadjusted patterns were being partly carried by other variables in the model.
 
 ---
 
 ## Model Performance
 
-### ROC curve and AUC
+### Discrimination — ROC curve and AUC
+
+The ROC curve and AUC assess whether the model assigns higher predicted probabilities to respondents who actually have diabetes — a check that the model is ranking risk sensibly before the adjusted coefficients are interpreted.
 
 ```{r}
-#| label: model-roc
+#| label: performance-roc
 #| fig-cap: "ROC curve — full social determinants model"
 #| fig-width: 6
 #| fig-height: 6
@@ -169,18 +411,22 @@ roc_obj <- roc(
   quiet     = TRUE
 )
 
-ggroc(roc_obj, color = palette_epi["vermillion"], linewidth = 1) +
+ggroc(roc_obj, color = palette_epi[["vermillion"]], linewidth = 1) +
   geom_abline(slope = -1, intercept = 1, linetype = "dashed", color = "grey60") +
   annotate("text", x = 0.35, y = 0.1,
            label = paste0("AUC = ", round(auc(roc_obj), 3)),
-           size  = 4.5) +
+           size = 4.5) +
   labs(title = "ROC Curve — Full Model", x = "Specificity", y = "Sensitivity")
 ```
 
-### Base demographic model vs full SDoH model — AUC comparison
+An AUC around 0.7–0.8 is typical for social determinants models predicting chronic disease. This model does not include clinical biomarkers (e.g. fasting glucose, HbA1c), so near-perfect discrimination is neither expected nor the goal — the aim is to understand which social and behavioural factors independently predict risk.
+
+### Incremental value of SDoH — base model vs full model
+
+A base demographic model (age, sex, race/ethnicity) represents the minimum expected predictive signal. Comparing its AUC to the full model quantifies the additional discrimination provided by the socioeconomic and behavioural predictors.
 
 ```{r}
-#| label: model-auc-comparison
+#| label: performance-auc-comparison
 #| collapse: true
 
 mod_base <- glm(
@@ -195,75 +441,86 @@ roc_base <- roc(
   quiet     = TRUE
 )
 
-cat("Base model AUC (age + sex + race): ", round(auc(roc_base), 3), "\n")
-cat("Full model AUC (all predictors):   ", round(auc(roc_obj),  3), "\n")
+cat("Base model AUC (age + sex + race/ethnicity):", round(auc(roc_base), 3), "\n")
+cat("Full model AUC (all predictors):            ", round(auc(roc_obj),  3), "\n")
+cat("Delta AUC:                                  ", round(auc(roc_obj) - auc(roc_base), 3), "\n\n")
+
+roc.test(roc_obj, roc_base)
 ```
 
-### Hosmer-Lemeshow goodness of fit
+The DeLong test formally assesses whether the two AUCs differ beyond chance. A significant result confirms that the SDoH predictors add meaningful discrimination over demographics alone.
+
+### Calibration
+
+At n = `r format(nrow(df_cc), big.mark = ",")`, the Hosmer-Lemeshow test will be significant even for a well-calibrated model — it has enormous power to detect trivial deviations at this sample size. The calibration plot is therefore the primary diagnostic for whether predicted probabilities align with observed event rates.
 
 ```{r}
-#| label: model-hosmer-lemeshow
+#| label: performance-calibration
+#| fig-cap: "Calibration plot — mean predicted probability vs observed proportion by decile"
+#| fig-width: 6
+#| fig-height: 6
+
+cal_data <- tibble(
+  predicted = fitted(mod),
+  observed  = as.integer(df_cc$diabetes) - 1L
+) |>
+  mutate(decile = ntile(predicted, 10)) |>
+  summarise(
+    mean_pred = mean(predicted),
+    mean_obs  = mean(observed),
+    n         = n(),
+    .by       = decile
+  )
+
+ggplot(cal_data, aes(x = mean_pred, y = mean_obs)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey50") +
+  geom_point(aes(size = n), color = palette_epi[["blue"]], show.legend = FALSE) +
+  geom_line(color = palette_epi[["blue"]], linewidth = 0.5) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Mean predicted probability", y = "Observed proportion",
+       title = "Calibration plot — predicted vs observed (by decile of predicted risk)")
+```
+
+Points close to the dashed diagonal indicate good calibration. Systematic deviation above the line means the model under-predicts risk in that range; below means it over-predicts. The point size reflects the number of respondents in each decile.
+
+```{r}
+#| label: performance-hosmer-lemeshow
 #| collapse: true
 
 hl <- hoslem.test(as.integer(df_cc$diabetes) - 1L, fitted(mod), g = 10)
 print(hl)
-# p > 0.05 indicates adequate fit
 ```
+
+Given the sample size, the HL p-value should be interpreted alongside the calibration plot rather than as a standalone pass/fail criterion.
+
+Taken together, the performance checks address two different questions: whether the model separates higher-risk from lower-risk respondents, and whether the predicted probabilities are numerically well aligned with observed rates. For this project, those checks matter less as a basis for classification and more as evidence that the fitted model is behaving sensibly enough to support interpretation of the adjusted odds ratios.
 
 ---
 
-## Results
+## Conclusions
 
-### Multivariable odds ratio table
+### Key findings
 
-```{r}
-#| label: results-table
+Obesity is the strongest single predictor of diabetes in this model — respondents in the obese BMI category have `r round(exp(coef(mod)["bmi_categoryObese"]), 2)` times the adjusted odds of a diabetes diagnosis compared to those with normal BMI (OR = `r round(exp(coef(mod)["bmi_categoryObese"]), 2)`, 95% CI `r round(exp(confint(mod)["bmi_categoryObese", ]), 2) |> str_c(collapse = "–")`). Age shows a clear dose-response gradient, with odds rising steadily from the 18–34 reference group through each successive band. A significant income gradient persists after adjustment, indicating that socioeconomic disadvantage is associated with higher diabetes risk independently of BMI, physical activity, and other behavioural factors — consistent with the downstream effects of material deprivation on metabolic health.
 
-tbl_regression(
-  mod,
-  exponentiate = TRUE,
-  estimate_fun = \(x) style_sigfig(x, digits = 3)
-) |>
-  bold_p(t = 0.05) |>
-  bold_labels() |>
-  add_n()
-```
+Physical inactivity and current smoking are both independently associated with elevated odds. Notably, having a personal doctor is associated with *higher* adjusted odds of diabetes — a finding that reflects detection bias rather than a protective effect of not having care: respondents without a provider are less likely to have received a diagnosis, not less likely to have the condition.
 
-### Univariable ORs
+The comparison between unadjusted and adjusted ORs reveals meaningful confounding, particularly for income and education. Crude ORs for lower socioeconomic groups are attenuated after adjustment for BMI and physical activity, suggesting that part — but not all — of the socioeconomic gradient in diabetes operates through these behavioural pathways.
 
-```{r}
-#| label: results-univariable
+### Model performance
 
-df_cc |>
-  select(diabetes, age_group, sex, race_ethnicity, education, income_group,
-         bmi_category, physically_active, smoking_status,
-         heavy_drinker, has_provider, mental_health_days) |>
-  tbl_uvregression(
-    method       = glm,
-    y            = diabetes,
-    method.args  = list(family = binomial),
-    exponentiate = TRUE,
-    estimate_fun = \(x) style_sigfig(x, digits = 3)
-  ) |>
-  bold_p(t = 0.05) |>
-  bold_labels()
-```
+The full model achieves an AUC of `r round(auc(roc_obj), 3)`, compared to `r round(auc(roc_base), 3)` for the base demographic model, confirming that socioeconomic and behavioural predictors add meaningful discrimination beyond age, sex, and race/ethnicity alone. The calibration plot shows predicted probabilities are well-aligned with observed rates across the risk distribution. The Hosmer-Lemeshow p-value is significant, as expected at this sample size, and is not interpreted as evidence of poor fit.
 
-### Tidy coefficients
+### Limitations
 
-```{r}
-#| label: results-tidy
-#| collapse: true
+**Cross-sectional design.** Diabetes status and all predictors are measured at the same point in time. The direction of causality cannot be established — for example, it is plausible that diabetes diagnosis prompts changes in physical activity or diet rather than the reverse.
 
-tidy(mod, conf.int = TRUE, exponentiate = TRUE) |>
-  mutate(across(where(is.numeric), \(x) round(x, 4)))
-```
+**Unweighted analysis.** BRFSS uses a complex survey design with stratification, clustering, and post-stratification weights to produce nationally representative estimates. This analysis uses unweighted logistic regression, which produces valid associations within the sample but does not account for the survey design. Population-level prevalence estimates and fully representative ORs would require `svyglm()` from the `survey` package with the provided `psu`, `strata`, and `llcp_weight` variables.
 
----
+**Self-reported outcome.** Diabetes status is based on self-report of a prior diagnosis. Undiagnosed diabetes — estimated to affect roughly 1 in 4 people with the condition — is not captured, which likely biases associations with healthcare access toward null.
 
-## Conclusions / Notes
-
-> *(Interpret key ORs in a public health context, note model limitations — separation in small race/ethnicity subgroups, unweighted analysis, cross-sectional design.)*
+**Complete-case analysis.** Respondents with missing predictor values were excluded (36.5%, n = 165,437), driven primarily by income-group non-response. If lower-income respondents are more likely to skip the question, the income gradient may be attenuated; the opposite pattern would inflate it. The assumption of missing at random is untestable.
 
 ---
 
