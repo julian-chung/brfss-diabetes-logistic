@@ -34,6 +34,8 @@ output/tables/*
 /.quarto/
 *_files/
 *_cache/
+output/search.json
+output/site_libs/
 
 # =============================================================================
 # R
@@ -62,3 +64,5 @@ Thumbs.db
 *.log
 *.tmp
 ~$*
+
+**/*.quarto_ipynb

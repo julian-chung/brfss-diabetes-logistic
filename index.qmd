@@ -6,7 +6,9 @@ format:
     number-sections: false
 ---
 
-This project uses the 2024 Behavioral Risk Factor Surveillance System (BRFSS) — the largest continuously conducted health telephone survey in the world, with 457,670 respondents across 49 states, DC, and US territories — to model the odds of a diabetes diagnosis as a function of demographic, behavioural, and social determinant predictors in a nationally representative US adult sample.
+This project analyses data from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a large U.S. health survey of over 450,000 adults, to understand how demographic, socioeconomic, and behavioural factors are associated with diabetes risk.
+
+The goal is to identify which factors show the strongest relationships with a diabetes diagnosis, and how those patterns change after accounting for differences across the population.
 
 The project is organised into three parts:
 
@@ -14,7 +16,7 @@ The project is organised into three parts:
 
 ## Overview
 
-A concise summary of the analysis, headline odds ratios, and the most important visualisations.
+A concise summary of the key findings, with visualisations showing how diabetes risk varies across age, body weight, and income.
 
 ↗ [Open Overview »](analysis/overview.qmd)
 
@@ -22,7 +24,7 @@ A concise summary of the analysis, headline odds ratios, and the most important 
 
 ## Exploratory Data Analysis
 
-Sample characteristics, variable distributions, outcome prevalence by subgroup, and unadjusted associations.
+A breakdown of the sample, variable distributions, and unadjusted relationships with diabetes status.
 
 ↗ [Open EDA »](analysis/eda.qmd)
 
@@ -30,6 +32,6 @@ Sample characteristics, variable distributions, outcome prevalence by subgroup, 
 
 ## Logistic Regression
 
-Full model specification, complete case exclusions, VIF checks, diagnostics, ROC/AUC, Hosmer-Lemeshow, and the OR table.
+Full model specification, diagnostics, and adjusted results, including odds ratios, model performance, and assumption checks.
 
 ↗ [Open Regression »](analysis/logistic-regression.qmd)

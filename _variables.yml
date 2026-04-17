@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------
 
 # --- Study identity -------------------------------------------------------
-study_title: "Logistic Regression: Social Determinants of Diabetes Diagnosis in U.S. Adults"
+study_title: "Modelling Diabetes Risk: Social and Behavioural Factors in BRFSS Data"
 study_short: "BRFSS-2024"
 irb_number: "N/A — public dataset"
 irb_institution: "CDC / BRFSS"

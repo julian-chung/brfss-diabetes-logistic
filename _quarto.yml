@@ -1,6 +1,11 @@
 project:
   type: website
   output-dir: output
+  render:
+    - index.qmd
+    - analysis/eda.qmd
+    - analysis/logistic-regression.qmd
+    - analysis/overview.qmd
 
 website:
   title: "BRFSS Diabetes Logistic Regression"
