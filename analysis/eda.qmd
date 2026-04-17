@@ -10,8 +10,17 @@ subtitle: "Exploratory Data Analysis"
 #| collapse: true
 #| code-summary: "Load packages and helpers"
 
-source(here::here("R", "setup.R"))
+library(here)
+library(tidyverse)
+library(arrow)
+library(gtsummary)
+library(janitor)
+
+source(here("R", "utils.R"))       # miss_summary(), fmt_pval(), n_pct(), etc.
+source(here("R", "plot_theme.R"))  # theme_epi(), scale_fill_epi(), save_fig()
 ```
+
+`tidyverse` covers data wrangling and visualisation; `arrow` reads the Parquet file produced by the SQL pipeline; `gtsummary` generates publication-ready Table 1s and univariable regression summaries. Project-level helpers are sourced from `R/`.
 
 ---
 
@@ -26,9 +35,125 @@ dim(df)
 names(df)
 ```
 
+The analytical dataset contains `r nrow(df)` respondents with a fully observed binary outcome; rows with missing or ambiguous diabetes responses (codes 2, 7, 9 in `DIABETE4`) were removed during the SQL build step. The columns include three survey design fields (`psu`, `strata`, `llcp_weight`) and `r ncol(df) - 4` demographic, socioeconomic, and behavioural predictors. No further outcome filtering is needed, so any remaining issues lie in predictor encoding and missingness.
+
 ---
 
 ## Sample Characteristics
+
+### Predictor distributions
+
+Understanding the sample composition across predictors helps identify sparse categories, where estimates will be less stable and require cautious interpretation.
+
+```{r}
+#| label: predictor-distributions
+#| fig-cap: "Categorical predictor distributions"
+#| fig-height: 10
+
+df_dist <- df |>
+  mutate(
+    age_group          = factor(age_group,
+                                levels = c("18-34", "35-44", "45-54", "55-64", "65-74", "75+")),
+    education          = factor(education,
+                                levels = c("Did not graduate high school", "High school graduate",
+                                           "Some college", "College graduate")),
+    income_group       = factor(income_group,
+                                levels = c("<$15k", "$15k-$25k", "$25k-$35k",
+                                           "$35k-$50k", "$50k-$100k", ">$100k")),
+    bmi_category       = factor(bmi_category,
+                                levels = c("Underweight", "Normal", "Overweight", "Obese")),
+    smoking_status     = factor(smoking_status,
+                                levels = c("Never", "Former",
+                                           "Current (some days)", "Current (daily)")),
+    mental_health_days = factor(mental_health_days,
+                                levels = c("0 days", "1-13 days", "14+ days"))
+  )
+
+cat_vars <- c("age_group", "sex", "race_ethnicity", "education", "income_group",
+              "bmi_category", "smoking_status", "mental_health_days")
+
+dist_data <- purrr::map_dfr(cat_vars, function(v) {
+  counts <- df_dist |>
+    filter(!is.na(.data[[v]])) |>
+    count(variable = v, level = as.character(.data[[v]])) |>
+    mutate(pct = n / sum(n) * 100)
+
+  if (is.factor(df_dist[[v]])) {
+    counts |> mutate(level = factor(level, levels = levels(df_dist[[v]])))
+  } else {
+    counts |> arrange(desc(n)) |> mutate(level = factor(level, levels = unique(level)))
+  }
+}) |>
+  mutate(level = fct_recode(level,
+                             "AI/AN" = "American Indian/Alaskan Native"))
+
+facet_labels <- c(
+  age_group          = "Age group",
+  sex                = "Sex",
+  race_ethnicity     = "Race/ethnicity",
+  education          = "Education",
+  income_group       = "Household income",
+  bmi_category       = "BMI category",
+  smoking_status     = "Smoking status",
+  mental_health_days = "Poor mental health days"
+)
+
+ggplot(dist_data, aes(x = pct, y = level)) +
+  geom_col(fill = palette_epi[["sky_blue"]], show.legend = FALSE) +
+  geom_text(aes(label = paste0(round(pct, 1), "%")), hjust = -0.1, size = 3) +
+  facet_wrap(~variable, scales = "free_y", ncol = 2,
+             labeller = as_labeller(facet_labels)) +
+  labs(x = "% of sample", y = NULL,
+       title = "Categorical predictor distributions") +
+  xlim(0, max(dist_data$pct) * 1.2) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(colour = "grey92", linewidth = 0.3),
+    plot.title         = element_text(hjust = 0.5, size = 14, face = "bold"),
+    strip.text         = element_text(face = "bold", size = 10)
+  )
+```
+
+The sample skews older and more educated, with adults aged 65 and over accounting for 48% of respondents and college graduates forming the largest education category (42.1%). The BMI distribution is predominantly above the normal-weight threshold, with 69% of respondents falling in the overweight or obese categories, indicating that BMI-related contrasts are well represented in the data. Race and ethnicity show the most analytically consequential imbalance: White respondents account for 73.5% of the sample, while several groups — Pacific Islander, American Indian or Alaska Native, Other/Multiracial, Hispanic, and Asian — each fall below 3%. Estimates for these smaller groups will therefore be less precise and require cautious interpretation.
+
+```{r}
+#| label: binary-predictors
+#| fig-cap: "Binary predictor prevalence"
+#| fig-height: 3
+
+binary_labels <- c(
+  physically_active = "Physically active",
+  heavy_drinker     = "Heavy drinker",
+  has_provider      = "Has personal doctor"
+)
+
+binary_data <- tibble(
+  variable = names(binary_labels),
+  label    = binary_labels
+) |>
+  mutate(pct = map_dbl(variable, ~mean(df[[.x]], na.rm = TRUE) * 100)) |>
+  arrange(pct) |>
+  mutate(label = factor(label, levels = label))
+
+ggplot(binary_data, aes(x = pct, y = label)) +
+  geom_segment(aes(x = 0, xend = pct, yend = label),
+               colour = palette_epi[["sky_blue"]]) +
+  geom_point(colour = palette_epi[["sky_blue"]], size = 3) +
+  geom_text(aes(label = paste0(round(pct, 1), "%")),
+            hjust = -0.3, size = 3) +
+  labs(x = "% of sample", y = NULL,
+       title = "Binary predictor prevalence") +
+  xlim(0, 105) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(colour = "grey92", linewidth = 0.3),
+    plot.title         = element_text(hjust = 0.5, size = 14, face = "bold")
+  )
+```
+
+All three binary predictors are strongly imbalanced. Heavy drinking is rare (5.9%), so estimates of its association with diabetes rest on a small exposed group. Having a personal doctor (87.6%) and being physically active (76.7%) remain one-sided, limiting contrast and reducing precision in their effect estimates.
 
 ### Outcome prevalence
 
@@ -36,10 +161,17 @@ names(df)
 #| label: outcome-prevalence
 #| collapse: true
 
-df |>
+prev <- df |>
   count(diabetes) |>
-  mutate(pct = round(n / sum(n) * 100, 1))
+  mutate(
+    prop = n / sum(n),
+    pct  = scales::percent(prop, accuracy = 0.1)
+  )
+
+prev
 ```
+
+`r prev$pct[prev$diabetes == 1]` of respondents (`r format(prev$n[prev$diabetes == 1], big.mark = ",")` of `r format(sum(prev$n), big.mark = ",")`) reported a diabetes diagnosis. The outcome is moderately imbalanced rather than rare, providing sufficient cases for stable estimation while still requiring attention to this imbalance in interpretation.
 
 ### Table 1 — sample characteristics by diabetes status
 
@@ -53,16 +185,46 @@ df |>
     bmi_category, physically_active, smoking_status,
     heavy_drinker, has_provider, mental_health_days
   ) |>
-  mutate(diabetes = factor(diabetes, levels = c(0, 1), labels = c("No diabetes", "Diabetes"))) |>
+  mutate(
+    diabetes   = factor(diabetes, levels = c(0, 1), labels = c("No diabetes", "Diabetes")),
+    age_group  = factor(age_group,
+                        levels = c("18-34", "35-44", "45-54", "55-64", "65-74", "75+")),
+    education  = factor(education,
+                        levels = c("Did not graduate high school", "High school graduate",
+                                   "Some college", "College graduate")),
+    income_group = factor(income_group,
+                          levels = c("<$15k", "$15k-$25k", "$25k-$35k",
+                                     "$35k-$50k", "$50k-$100k", ">$100k")),
+    bmi_category = factor(bmi_category,
+                          levels = c("Underweight", "Normal", "Overweight", "Obese")),
+    smoking_status = factor(smoking_status,
+                            levels = c("Never", "Former", "Current (some days)", "Current (daily)"))
+  ) |>
   tbl_summary(
     by      = diabetes,
-    missing = "no"
+    missing = "no",
+    label   = list(
+      age_group          ~ "Age group",
+      sex                ~ "Sex",
+      race_ethnicity     ~ "Race/ethnicity",
+      education          ~ "Education",
+      income_group       ~ "Household income",
+      bmi_category       ~ "BMI category",
+      physically_active  ~ "Physically active",
+      smoking_status     ~ "Smoking status",
+      heavy_drinker      ~ "Heavy drinker",
+      has_provider       ~ "Has personal doctor",
+      mental_health_days ~ "Poor mental health days"
+    )
   ) |>
   add_p() |>
   add_overall() |>
   bold_p(t = 0.05) |>
-  bold_labels()
+  bold_labels() |>
+  modify_caption("**Table 1.** Sample characteristics by diabetes status")
 ```
+
+Age and BMI show the strongest gradients: the diabetes group skews substantially older, and obesity is markedly more common (52% vs 30%). Socioeconomic differences follow a similar pattern, with lower income and lower educational attainment more prevalent in the diabetes group. Behavioural and health indicators add further contrasts — lower physical activity, a higher proportion of former smokers, and more frequent poor mental health days — though these likely reflect a mix of upstream risk factors and downstream consequences of disease rather than independent effects. These overlapping relationships will be estimated more precisely in the adjusted model.
 
 ---
 
@@ -73,13 +235,28 @@ df |>
 #| fig-cap: "Crude diabetes prevalence by key predictor categories"
 #| fig-height: 10
 
-# Categorical predictors only
+df_prev <- df |>
+  mutate(smoking_status = factor(smoking_status,
+                                  levels = c("Never", "Former",
+                                             "Current (some days)", "Current (daily)")))
+
 cat_vars <- c("age_group", "sex", "race_ethnicity", "education",
               "income_group", "bmi_category", "smoking_status",
               "mental_health_days")
 
+facet_labels <- c(
+  age_group          = "Age group",
+  sex                = "Sex",
+  race_ethnicity     = "Race/ethnicity",
+  education          = "Education",
+  income_group       = "Household income",
+  bmi_category       = "BMI category",
+  smoking_status     = "Smoking status",
+  mental_health_days = "Poor mental health days"
+)
+
 prev_data <- purrr::map_dfr(cat_vars, function(v) {
-  df |>
+  counts <- df_prev |>
     filter(!is.na(.data[[v]])) |>
     group_by(variable = v, level = .data[[v]]) |>
     summarise(
@@ -88,22 +265,44 @@ prev_data <- purrr::map_dfr(cat_vars, function(v) {
       prev_pct = mean(diabetes) * 100,
       .groups  = "drop"
     )
-})
 
-ggplot(prev_data, aes(x = prev_pct, y = reorder(level, prev_pct), fill = variable)) +
-  geom_col(show.legend = FALSE) +
+  if (is.factor(df_prev[[v]])) {
+    counts |> mutate(level = factor(as.character(level),
+                                    levels = levels(df_prev[[v]])))
+  } else {
+    counts |> arrange(prev_pct) |>
+      mutate(level = factor(as.character(level), levels = unique(as.character(level))))
+  }
+}) |>
+  mutate(level = fct_recode(level, "AI/AN" = "American Indian/Alaskan Native"))
+
+ggplot(prev_data, aes(x = prev_pct, y = level)) +
+  geom_col(fill = palette_epi[["sky_blue"]], show.legend = FALSE) +
   geom_text(aes(label = paste0(round(prev_pct, 1), "%")),
             hjust = -0.1, size = 3) +
-  facet_wrap(~variable, scales = "free_y", ncol = 2) +
-  scale_fill_epi() +
+  facet_wrap(~variable, scales = "free_y", ncol = 2,
+             labeller = as_labeller(facet_labels)) +
   labs(x = "Diabetes prevalence (%)", y = NULL,
        title = "Crude diabetes prevalence by predictor category") +
-  xlim(0, max(prev_data$prev_pct) * 1.2)
+  xlim(0, max(prev_data$prev_pct) * 1.2) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(colour = "grey92", linewidth = 0.3),
+    plot.title         = element_text(hjust = 0.5, size = 14, face = "bold"),
+    strip.text         = element_text(face = "bold", size = 10)
+  )
 ```
+
+The age gradient climbs from 1.6% in those aged 18–34 to 22.2% in those aged 75+, while the BMI gradient is similarly pronounced, with the obese group at 22.7% compared with 7.6% in the normal-weight group. Socioeconomic gradients are also evident, with higher prevalence in lower income and lower education categories.
+
+Behavioural and health indicators show additional differences, including higher prevalence among those reporting 14+ poor mental health days and among former smokers, although these patterns may reflect confounding or changes following diagnosis rather than independent effects. Variation across race and ethnicity is substantial but warrants cautious interpretation due to small sample sizes in several groups.
 
 ---
 
 ## Unadjusted Associations
+
+Each predictor is regressed against the diabetes outcome individually, producing a crude odds ratio (OR) that quantifies the association without controlling for any other variable.
 
 ```{r}
 #| label: uvregression
@@ -143,21 +342,51 @@ df |>
     y            = diabetes,
     method.args  = list(family = binomial),
     exponentiate = TRUE,
-    estimate_fun = \(x) style_sigfig(x, digits = 3)
+    estimate_fun = \(x) style_sigfig(x, digits = 3),
+    label        = list(
+      age_group          ~ "Age group",
+      sex                ~ "Sex",
+      race_ethnicity     ~ "Race/ethnicity",
+      education          ~ "Education",
+      income_group       ~ "Household income",
+      bmi_category       ~ "BMI category",
+      physically_active  ~ "Physically active",
+      smoking_status     ~ "Smoking status",
+      heavy_drinker      ~ "Heavy drinker",
+      has_provider       ~ "Has personal doctor",
+      mental_health_days ~ "Poor mental health days"
+    )
   ) |>
   bold_p(t = 0.05) |>
-  bold_labels()
+  bold_labels() |>
+  modify_caption("**Table 2.** Unadjusted odds ratios for diabetes by predictor")
 ```
+
+The age odds ratio rises monotonically from 2.29 in the 35–44 group to 17.2 in those aged 75+, while obesity is associated with 3.58 times the odds of the normal-weight group. Socioeconomic gradients are also evident, with progressively higher odds of diabetes in lower income and lower education categories.
+
+Behavioural and health indicators show additional associations, including lower odds among physically active respondents and higher odds among former smokers, though these patterns likely reflect confounding and behavioural changes following diagnosis rather than independent effects. Several variables display clear signs of reverse causation, particularly heavy drinking (OR 0.42) and having a personal doctor (OR 4.29), where the direction of association is more consistent with disease status influencing behaviour or healthcare contact. These crude estimates provide context, but many relationships are likely to attenuate or change after adjustment.
 
 ---
 
 ## Missingness
+
+The SQL pipeline recoded "don't know", "refused", and "not applicable" responses to `NULL`. Variables not shown have no missing values.
 
 ```{r}
 #| label: missingness
 
 miss_summary(df)
 ```
+
+Income group stands out with 25.5% missingness — the only variable where nonresponse is large enough to meaningfully reduce the effective sample under complete-case analysis. Most remaining variables fall below 10%, with heavy drinking (10.2%) and BMI category (9.3%) contributing some additional row loss. Whether income nonresponse is random or related to diabetes risk is unclear, but its scale is important to consider when interpreting results from complete-case models.
+
+---
+
+## Summary
+
+Age and BMI are the most consistent signals, with strong, monotonic gradients across the descriptive analyses. Socioeconomic predictors show clear unadjusted associations, while income group stands out with substantial missingness (25.5%), reducing the effective sample under complete-case analysis. Several behavioural variables, particularly heavy drinking and having a personal doctor, show patterns more consistent with reverse causation than independent effects.
+
+The adjusted model will help separate these overlapping relationships and identify which associations persist after controlling for confounding.
 
 ---
 
