@@ -361,18 +361,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This project analyses data from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a large U.S. health survey of over 450,000 adults, to understand how demographic, socioeconomic, and behavioural factors are associated with diabetes risk. The analysis focuses on identifying which factors show the strongest relationships with a diabetes diagnosis after accounting for differences across the population. Full methods and model diagnostics are in the <a href="../analysis/logistic-regression.html">Logistic Regression notebook</a>.</p>
+<p>This analysis uses data from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a U.S. health survey of over 450,000 adults, to identify which demographic, socioeconomic, and behavioural factors are most strongly linked to a diabetes diagnosis after adjusting for the others. This page summarises the key findings; full methods and model diagnostics are in the <a href="../analysis/logistic-regression.html">Logistic Regression notebook</a>.</p>
 <section id="key-findings" class="level2" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="key-findings"><span class="header-section-number">1</span> Key Findings</h2>
-<p><strong>Age is the strongest predictor of diabetes risk.</strong> Adults aged 75+ have 17 times the odds of a diabetes diagnosis compared to those aged 18–34, after accounting for other factors.</p>
+<p><strong>Age is the strongest predictor of diabetes risk.</strong> Adults aged 75+ have 17 times the odds of a diabetes diagnosis compared to those aged 18-34, after adjusting for other factors.</p>
 <p><strong>Obesity and age compound risk.</strong> Adults with an obese BMI have 3.2 times the odds of a diagnosis compared to those at a normal weight, and this gap widens with age.</p>
-<p><strong>Socioeconomic and racial disparities persist after adjustment.</strong> Lower income is associated with higher risk, and several racial and ethnic groups show elevated odds even after accounting for income, education, and lifestyle factors.</p>
-<p><strong>The model shows consistent but not perfect discrimination.</strong> It correctly ranks a person with diabetes above a person without in 77% of cases, indicating reliable but moderate separation based on demographic and lifestyle factors.</p>
+<p><strong>Socioeconomic and racial disparities persist after adjustment.</strong> Lower income is linked to higher risk, and several racial and ethnic groups show higher odds even after adjusting for income, education, and lifestyle.</p>
+<p><strong>The model discriminates reliably but not perfectly.</strong> It ranks a person with diabetes above a person without in 77% of cases.</p>
 <hr>
 </section>
 <section id="how-diabetes-risk-changes-across-the-population" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="how-diabetes-risk-changes-across-the-population"><span class="header-section-number">2</span> How diabetes risk changes across the population</h2>
-<p>These figures summarise the main patterns in the data. They focus on how diabetes risk changes across age, body weight, and socioeconomic status, and highlight a small number of key findings from the full model.</p>
+<p>The figures below show how diabetes risk changes with age, body weight, and income, and highlight a few key results from the full model.</p>
 <section id="diabetes-risk-rises-sharply-with-age-and-bmi" class="level3" data-number="2.1">
 <h3 data-number="2.1" class="anchored" data-anchor-id="diabetes-risk-rises-sharply-with-age-and-bmi"><span class="header-section-number">2.1</span> Diabetes risk rises sharply with age and BMI</h3>
 <div class="cell">
@@ -437,8 +437,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Diabetes risk increases with both age and body weight, and the two effects compound rather than substitute. In this model, predicted risk for adults with obesity rises from 1.8% at age 18-34 to 24.4% at age 75+, compared to 9.1% for adults at a normal weight in the same age group.</p>
-<p>These estimates isolate the effect of age and BMI by holding other factors constant. In practice, risk will be higher for individuals with additional risk factors such as lower income, physical inactivity, or existing health conditions.</p>
+<p>Diabetes risk rises with both age and body weight, and the two effects build on each other. In this model, predicted risk for adults with obesity rises from 1.8% at age 18-34 to 24.4% at age 75+, compared to 9.1% for normal-weight adults of the same age.</p>
+<p>These estimates hold other factors constant to isolate age and BMI. In practice, risk is higher for people with additional risk factors such as lower income, physical inactivity, or existing health conditions.</p>
 <hr>
 </section>
 <section id="diabetes-risk-increases-as-income-falls" class="level3" data-number="2.2">
@@ -482,7 +482,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Diabetes risk increases steadily as income falls, not just at the extremes. Adults with a household income below $15,000 have 1.86 times the odds of a diabetes diagnosis compared to those earning over $100,000, and this gradient persists after accounting for age, body weight, race, and lifestyle factors.</p>
+<p>Diabetes risk increases steadily as income falls, not just at the extremes. Adults with a household income below $15,000 have 1.86 times the odds of a diabetes diagnosis compared to those earning over $100,000, and this gradient persists after adjusting for age, body weight, race, and lifestyle factors.</p>
 <p>This suggests that income is not simply a proxy for individual behaviour, but is independently associated with diabetes risk.</p>
 <hr>
 </section>
@@ -492,7 +492,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Curated forest plot</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>curated_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"age_group75+"</span>                                 <span class="ot">=</span> <span class="st">"Age 75+ vs 18–34"</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"age_group75+"</span>                                 <span class="ot">=</span> <span class="st">"Age 75+ vs 18-34"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"bmi_categoryObese"</span>                            <span class="ot">=</span> <span class="st">"Obese vs normal BMI"</span>,</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"income_group&lt;$15k"</span>                            <span class="ot">=</span> <span class="st">"Income &lt;$15k vs &gt;$100k"</span>,</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"race_ethnicityAmerican Indian/Alaskan Native"</span> <span class="ot">=</span> <span class="st">"AI/AN vs White"</span>,</span>
@@ -513,7 +513,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">"AI/AN vs White"</span>,</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Asian vs White"</span>,</span>
 <span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Obese vs normal BMI"</span>,</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Age 75+ vs 18–34"</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Age 75+ vs 18-34"</span></span>
 <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    )),</span>
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">direction =</span> <span class="fu">if_else</span>(estimate <span class="sc">&gt;=</span> <span class="dv">1</span>, <span class="st">"Higher odds of diabetes"</span>,</span>
 <span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">"Lower odds (likely bias or reverse causation)"</span>)</span>
@@ -553,9 +553,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Age is the strongest predictor in the model: adults aged 75 and over have 17 times the odds of a diabetes diagnosis compared to those aged 18–34. Obesity, income, racial and ethnic background, and physical inactivity are also independently associated with higher risk.</p>
-<p>Two findings show lower odds but do not reflect protective effects. People without a regular healthcare provider are less likely to be diagnosed regardless of their underlying risk, indicating underdiagnosis. The heavy drinking result likely reflects reverse causation: individuals with chronic illness often reduce alcohol consumption, so current heavy drinkers appear healthier on average than they are.</p>
-<p>These results show that diabetes risk is shaped by a combination of age, body weight, and socioeconomic conditions. While some associations reflect underlying biology, others highlight how access to care and behavioural changes can influence what is observed in the data.</p>
+<p>Age is the strongest predictor in the model: adults aged 75 and over have 17 times the odds of a diabetes diagnosis compared to those aged 18-34. Obesity, income, racial and ethnic background, and physical inactivity are also independently associated with higher risk.</p>
+<p>Two findings show lower odds, but neither is protective. People without a regular healthcare provider are less likely to be diagnosed whatever their underlying risk, which points to underdiagnosis. The heavy-drinking result likely reflects reverse causation: people with chronic illness often cut back on alcohol, so current heavy drinkers look healthier on average than they are.</p>
+<p>These results show that diabetes risk is shaped by age, body weight, and socioeconomic conditions together. Some associations reflect underlying biology; others show how access to care and behaviour shape what appears in the data.</p>
 
 
 <!-- -->
@@ -1033,7 +1033,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Overview: Key Findings"</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>This project analyses data from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a large U.S. health survey of over 450,000 adults, to understand how demographic, socioeconomic, and behavioural factors are associated with diabetes risk. The analysis focuses on identifying which factors show the strongest relationships with a diabetes diagnosis after accounting for differences across the population. Full methods and model diagnostics are in the <span class="co">[</span><span class="ot">Logistic Regression notebook</span><span class="co">](logistic-regression.qmd)</span>.</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>This analysis uses data from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a U.S. health survey of over 450,000 adults, to identify which demographic, socioeconomic, and behavioural factors are most strongly linked to a diabetes diagnosis after adjusting for the others. This page summarises the key findings; full methods and model diagnostics are in the <span class="co">[</span><span class="ot">Logistic Regression notebook</span><span class="co">](logistic-regression.qmd)</span>.</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
@@ -1060,19 +1060,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Findings</span></span>
 <span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>**Age is the strongest predictor of diabetes risk.** Adults aged 75+ have <span class="in">`r round(exp(coef(mod)["age_group75+"]), 0)`</span> times the odds of a diabetes diagnosis compared to those aged 18–34, after accounting for other factors.</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>**Age is the strongest predictor of diabetes risk.** Adults aged 75+ have <span class="in">`r round(exp(coef(mod)["age_group75+"]), 0)`</span> times the odds of a diabetes diagnosis compared to those aged 18-34, after adjusting for other factors.</span>
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>**Obesity and age compound risk.** Adults with an obese BMI have <span class="in">`r round(exp(coef(mod)["bmi_categoryObese"]), 1)`</span> times the odds of a diagnosis compared to those at a normal weight, and this gap widens with age.</span>
 <span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>**Socioeconomic and racial disparities persist after adjustment.** Lower income is associated with higher risk, and several racial and ethnic groups show elevated odds even after accounting for income, education, and lifestyle factors.</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>**Socioeconomic and racial disparities persist after adjustment.** Lower income is linked to higher risk, and several racial and ethnic groups show higher odds even after adjusting for income, education, and lifestyle.</span>
 <span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>**The model shows consistent but not perfect discrimination.** It correctly ranks a person with diabetes above a person without in <span class="in">`r round(auc_val * 100, 0)`</span>% of cases, indicating reliable but moderate separation based on demographic and lifestyle factors.</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>**The model discriminates reliably but not perfectly.** It ranks a person with diabetes above a person without in <span class="in">`r round(auc_val * 100, 0)`</span>% of cases.</span>
 <span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="fu">## How diabetes risk changes across the population</span></span>
 <span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>These figures summarise the main patterns in the data. They focus on how diabetes risk changes across age, body weight, and socioeconomic status, and highlight a small number of key findings from the full model.</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>The figures below show how diabetes risk changes with age, body weight, and income, and highlight a few key results from the full model.</span>
 <span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="fu">### Diabetes risk rises sharply with age and BMI</span></span>
 <span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a></span>
@@ -1132,9 +1132,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>Diabetes risk increases with both age and body weight, and the two effects compound rather than substitute. In this model, predicted risk for adults with obesity rises from <span class="in">`r round(pred_grid[pred_grid$age_group == "18-34" &amp; pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`</span>% at age 18-34 to <span class="in">`r round(pred_grid[pred_grid$age_group == "75+" &amp; pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`</span>% at age 75+, compared to <span class="in">`r round(pred_grid[pred_grid$age_group == "75+" &amp; pred_grid$bmi_category == "Normal", "prob"] * 100, 1)`</span>% for adults at a normal weight in the same age group.</span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>Diabetes risk rises with both age and body weight, and the two effects build on each other. In this model, predicted risk for adults with obesity rises from <span class="in">`r round(pred_grid[pred_grid$age_group == "18-34" &amp; pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`</span>% at age 18-34 to <span class="in">`r round(pred_grid[pred_grid$age_group == "75+" &amp; pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`</span>% at age 75+, compared to <span class="in">`r round(pred_grid[pred_grid$age_group == "75+" &amp; pred_grid$bmi_category == "Normal", "prob"] * 100, 1)`</span>% for normal-weight adults of the same age.</span>
 <span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>These estimates isolate the effect of age and BMI by holding other factors constant. In practice, risk will be higher for individuals with additional risk factors such as lower income, physical inactivity, or existing health conditions.</span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>These estimates hold other factors constant to isolate age and BMI. In practice, risk is higher for people with additional risk factors such as lower income, physical inactivity, or existing health conditions.</span>
 <span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: or-data</span></span>
@@ -1185,7 +1185,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a>Diabetes risk increases steadily as income falls, not just at the extremes. Adults with a household income below $15,000 have <span class="in">`r round(or_df$estimate[or_df$term == "income_group&lt;$15k"], 2)`</span> times the odds of a diabetes diagnosis compared to those earning over $100,000, and this gradient persists after accounting for age, body weight, race, and lifestyle factors.</span>
+<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a>Diabetes risk increases steadily as income falls, not just at the extremes. Adults with a household income below $15,000 have <span class="in">`r round(or_df$estimate[or_df$term == "income_group&lt;$15k"], 2)`</span> times the odds of a diabetes diagnosis compared to those earning over $100,000, and this gradient persists after adjusting for age, body weight, race, and lifestyle factors.</span>
 <span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a>This suggests that income is not simply a proxy for individual behaviour, but is independently associated with diabetes risk.</span>
 <span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a></span>
@@ -1199,7 +1199,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a><span class="co">#| code-summary: "Curated forest plot"</span></span>
 <span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a>curated_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a>  <span class="st">"age_group75+"</span>                                 <span class="ot">=</span> <span class="st">"Age 75+ vs 18–34"</span>,</span>
+<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a>  <span class="st">"age_group75+"</span>                                 <span class="ot">=</span> <span class="st">"Age 75+ vs 18-34"</span>,</span>
 <span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a>  <span class="st">"bmi_categoryObese"</span>                            <span class="ot">=</span> <span class="st">"Obese vs normal BMI"</span>,</span>
 <span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a>  <span class="st">"income_group&lt;$15k"</span>                            <span class="ot">=</span> <span class="st">"Income &lt;$15k vs &gt;$100k"</span>,</span>
 <span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a>  <span class="st">"race_ethnicityAmerican Indian/Alaskan Native"</span> <span class="ot">=</span> <span class="st">"AI/AN vs White"</span>,</span>
@@ -1220,7 +1220,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a>      <span class="st">"AI/AN vs White"</span>,</span>
 <span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Asian vs White"</span>,</span>
 <span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Obese vs normal BMI"</span>,</span>
-<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Age 75+ vs 18–34"</span></span>
+<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Age 75+ vs 18-34"</span></span>
 <span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a>    )),</span>
 <span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a>    <span class="at">direction =</span> <span class="fu">if_else</span>(estimate <span class="sc">&gt;=</span> <span class="dv">1</span>, <span class="st">"Higher odds of diabetes"</span>,</span>
 <span id="cb4-206"><a href="#cb4-206" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">"Lower odds (likely bias or reverse causation)"</span>)</span>
@@ -1253,11 +1253,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a>Age is the strongest predictor in the model: adults aged 75 and over have <span class="in">`r round(exp(coef(mod)["age_group75+"]), 0)`</span> times the odds of a diabetes diagnosis compared to those aged 18–34. Obesity, income, racial and ethnic background, and physical inactivity are also independently associated with higher risk.</span>
+<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a>Age is the strongest predictor in the model: adults aged 75 and over have <span class="in">`r round(exp(coef(mod)["age_group75+"]), 0)`</span> times the odds of a diabetes diagnosis compared to those aged 18-34. Obesity, income, racial and ethnic background, and physical inactivity are also independently associated with higher risk.</span>
 <span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a>Two findings show lower odds but do not reflect protective effects. People without a regular healthcare provider are less likely to be diagnosed regardless of their underlying risk, indicating underdiagnosis. The heavy drinking result likely reflects reverse causation: individuals with chronic illness often reduce alcohol consumption, so current heavy drinkers appear healthier on average than they are.</span>
+<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a>Two findings show lower odds, but neither is protective. People without a regular healthcare provider are less likely to be diagnosed whatever their underlying risk, which points to underdiagnosis. The heavy-drinking result likely reflects reverse causation: people with chronic illness often cut back on alcohol, so current heavy drinkers look healthier on average than they are.</span>
 <span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a>These results show that diabetes risk is shaped by a combination of age, body weight, and socioeconomic conditions. While some associations reflect underlying biology, others highlight how access to care and behavioural changes can influence what is observed in the data.</span>
+<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a>These results show that diabetes risk is shaped by age, body weight, and socioeconomic conditions together. Some associations reflect underlying biology; others show how access to care and behaviour shape what appears in the data.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

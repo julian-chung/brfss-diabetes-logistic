@@ -338,7 +338,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#model-fitting" id="toc-model-fitting" class="nav-link" data-scroll-target="#model-fitting"><span class="header-section-number">5</span> Model Fitting</a></li>
   <li><a href="#assumption-checks" id="toc-assumption-checks" class="nav-link" data-scroll-target="#assumption-checks"><span class="header-section-number">6</span> Assumption Checks</a>
   <ul class="collapse">
-  <li><a href="#multicollinearity-vif" id="toc-multicollinearity-vif" class="nav-link" data-scroll-target="#multicollinearity-vif"><span class="header-section-number">6.1</span> Multicollinearity — VIF</a></li>
+  <li><a href="#multicollinearity-vif" id="toc-multicollinearity-vif" class="nav-link" data-scroll-target="#multicollinearity-vif"><span class="header-section-number">6.1</span> Multicollinearity: VIF</a></li>
   <li><a href="#model-diagnostics" id="toc-model-diagnostics" class="nav-link" data-scroll-target="#model-diagnostics"><span class="header-section-number">6.2</span> Model diagnostics</a></li>
   </ul></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results"><span class="header-section-number">7</span> Results</a>
@@ -349,8 +349,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#model-performance" id="toc-model-performance" class="nav-link" data-scroll-target="#model-performance"><span class="header-section-number">8</span> Model Performance</a>
   <ul class="collapse">
-  <li><a href="#discrimination-roc-curve-and-auc" id="toc-discrimination-roc-curve-and-auc" class="nav-link" data-scroll-target="#discrimination-roc-curve-and-auc"><span class="header-section-number">8.1</span> Discrimination — ROC curve and AUC</a></li>
-  <li><a href="#incremental-value-of-sdoh-base-model-vs-full-model" id="toc-incremental-value-of-sdoh-base-model-vs-full-model" class="nav-link" data-scroll-target="#incremental-value-of-sdoh-base-model-vs-full-model"><span class="header-section-number">8.2</span> Incremental value of SDoH — base model vs full model</a></li>
+  <li><a href="#discrimination-roc-curve-and-auc" id="toc-discrimination-roc-curve-and-auc" class="nav-link" data-scroll-target="#discrimination-roc-curve-and-auc"><span class="header-section-number">8.1</span> Discrimination: ROC curve and AUC</a></li>
+  <li><a href="#incremental-value-of-the-social-and-behavioural-predictors" id="toc-incremental-value-of-the-social-and-behavioural-predictors" class="nav-link" data-scroll-target="#incremental-value-of-the-social-and-behavioural-predictors"><span class="header-section-number">8.2</span> Incremental value of the social and behavioural predictors</a></li>
   <li><a href="#calibration" id="toc-calibration" class="nav-link" data-scroll-target="#calibration"><span class="header-section-number">8.3</span> Calibration</a></li>
   </ul></li>
   <li><a href="#conclusions" id="toc-conclusions" class="nav-link" data-scroll-target="#conclusions"><span class="header-section-number">9</span> Conclusions</a>
@@ -387,7 +387,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This notebook estimates adjusted associations between diabetes status and a set of demographic, socioeconomic, and behavioural predictors using multivariable logistic regression.</p>
+<p>This notebook estimates adjusted associations between diabetes status and demographic, socioeconomic, and behavioural predictors using multivariable logistic regression.</p>
 <p>The data come from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a nationally representative telephone survey of U.S. adults conducted annually by the CDC. The analysis examines whether these factors remain associated with diabetes status after adjustment for confounding.</p>
 <section id="setup" class="level2" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="setup"><span class="header-section-number">1</span> Setup</h2>
@@ -399,13 +399,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)            <span class="co"># tidy() — extract model coefficients as a data frame</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)              <span class="co"># vif() — variance inflation factors</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(performance)      <span class="co"># check_model() — visual diagnostic plots</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)            <span class="co"># tidy(): extract model coefficients as a data frame</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)              <span class="co"># vif(): variance inflation factors</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(performance)      <span class="co"># check_model(): visual diagnostic plots</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(see)              <span class="co"># plotting backend for performance</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)        <span class="co"># plot composition and annotation</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pROC)             <span class="co"># roc(), auc(), ggroc() — ROC curve and AUC</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ResourceSelection) <span class="co"># hoslem.test() — Hosmer-Lemeshow goodness-of-fit</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pROC)             <span class="co"># roc(), auc(), ggroc(): ROC curve and AUC</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ResourceSelection) <span class="co"># hoslem.test(): Hosmer-Lemeshow goodness-of-fit</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"utils.R"</span>))</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"plot_theme.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -432,7 +432,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="3" class="anchored" data-anchor-id="data-preparation"><span class="header-section-number">3</span> Data Preparation</h2>
 <section id="factor-levels-and-reference-categories" class="level3" data-number="3.1">
 <h3 data-number="3.1" class="anchored" data-anchor-id="factor-levels-and-reference-categories"><span class="header-section-number">3.1</span> Factor levels and reference categories</h3>
-<p>Reference categories determine the comparison group for each odds ratio. We set these to substantively meaningful baselines — typically the lowest-risk or most socioeconomically advantaged group — so that estimated effects reflect higher risk relative to a favourable exposure level, making the direction of associations intuitive.</p>
+<p>Reference categories determine the comparison group for each odds ratio. We set these to meaningful baselines (typically the lowest-risk or most advantaged group) so that estimated effects read as higher risk relative to a favourable exposure level, keeping the direction of associations intuitive.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Set factor levels and reference categories</summary>
@@ -485,7 +485,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="complete-case-exclusions" class="level3" data-number="3.2">
 <h3 data-number="3.2" class="anchored" data-anchor-id="complete-case-exclusions"><span class="header-section-number">3.2</span> Complete-case exclusions</h3>
-<p><code>glm()</code> requires no missing values. Rows with a missing value on any predictor are dropped here, and the retained dataset <code>df_cc</code> is used for all subsequent modelling.</p>
+<p><code>glm()</code> cannot use rows with missing values, so any row missing a predictor is dropped here. The retained dataset <code>df_cc</code> is used for all subsequent modelling.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -504,13 +504,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="do">## Before: 453241 | After: 287804 | Excluded: 165437 ( 36.5 %)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<p>36.5% of respondents are excluded, largely due to the 25.5% income-group missingness identified in the EDA. The reason for this missingness is unknown; if lower-income respondents are more likely to skip the question, the estimated income gradient may be attenuated under complete-case analysis, while the opposite pattern would bias estimates in the other direction. This is the main limitation of the complete-case specification in this model.</p>
+<p>36.5% of respondents are excluded, largely due to the 25.5% income-group missingness identified in the EDA. The reason for this missingness is unknown; if lower-income respondents are more likely to skip the question, the estimated income gradient may be attenuated, and the reverse would inflate it. This is the main limitation of the complete-case approach.</p>
 <hr>
 </section>
 </section>
 <section id="model-specification" class="level2" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="model-specification"><span class="header-section-number">4</span> Model Specification</h2>
-<p>The outcome — diabetes diagnosis — is binary, so logistic regression is used to model the log-odds of the outcome as a function of the predictors. Coefficients are exponentiated and reported as odds ratios (ORs), the standard effect measure for cross-sectional analyses of this type.</p>
+<p>The outcome, diabetes diagnosis, is binary, so logistic regression models the log-odds of diagnosis as a function of the predictors. Coefficients are exponentiated and reported as odds ratios (ORs), the standard effect measure for this kind of cross-sectional analysis.</p>
 <p>All 11 predictors are entered simultaneously rather than selected stepwise. Stepwise procedures can improve apparent fit in-sample but tend to produce unstable estimates and inflated Type I error. The aim here is to estimate the adjusted association of each predictor with diabetes status, so a theory-driven full model is preferred.</p>
 <p>The model includes three demographic predictors (age, sex, race/ethnicity), two socioeconomic predictors (education and income), one access-to-care predictor (having a personal doctor), and five behavioural and clinical predictors (BMI, physical activity, smoking, alcohol use, and mental health).</p>
 <div class="cell">
@@ -531,7 +531,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     heavy_drinker + mental_health_days</code></pre>
 </div>
 </div>
-<p>We are using an associational model fit to cross-sectional data, so it estimates adjusted odds rather than causal effects. Diabetes status and the predictors are measured at the same point in time, so the direction of causality cannot be established from this data alone.</p>
+<p>This is an associational model fit to cross-sectional data: it estimates adjusted odds, not causal effects. Diabetes status and the predictors are measured at the same point in time, so the direction of causality cannot be established from these data alone.</p>
 <hr>
 </section>
 <section id="model-fitting" class="level2" data-number="5">
@@ -564,7 +564,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="6" class="anchored" data-anchor-id="assumption-checks"><span class="header-section-number">6</span> Assumption Checks</h2>
 <p>Model fit alone does not guarantee reliable estimates, so key assumptions are checked before interpreting coefficients.</p>
 <section id="multicollinearity-vif" class="level3" data-number="6.1">
-<h3 data-number="6.1" class="anchored" data-anchor-id="multicollinearity-vif"><span class="header-section-number">6.1</span> Multicollinearity — VIF</h3>
+<h3 data-number="6.1" class="anchored" data-anchor-id="multicollinearity-vif"><span class="header-section-number">6.1</span> Multicollinearity: VIF</h3>
 <p>Highly correlated predictors inflate standard errors and make individual coefficients unstable, even when overall model fit is acceptable. Variance inflation factors (VIFs) quantify this inflation for each predictor.</p>
 <div class="cell">
 <details class="code-fold">
@@ -584,7 +584,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="do">## mental_health_days 1.153756  2        1.036403</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<p>Because several predictors are multi-level categorical variables, <code>car::vif()</code> reports generalized VIFs (GVIF). The adjusted values, GVIF^(1/(2·Df)), are all below 1.05 — well under the conventional threshold of 2 — indicating no meaningful collinearity.</p>
+<p>Because several predictors are multi-level categorical variables, <code>car::vif()</code> reports generalised VIFs (GVIF). The adjusted values, GVIF^(1/(2·Df)), are all below 1.05, well under the conventional threshold of 2, indicating no meaningful collinearity.</p>
 <p>Income and education show slightly higher values than the other predictors, consistent with their expected correlation in the population, but neither approaches a level that would inflate standard errors or destabilise coefficient estimates.</p>
 </section>
 <section id="model-diagnostics" class="level3" data-number="6.2">
@@ -628,8 +628,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The binned residuals plot shows systematic deviation outside the error bounds, with residuals consistently negative across the predicted probability range. The model overpredicts diabetes probability across most of the risk distribution, indicating that the linear functional form does not fully capture the relationship between the predictors and the log-odds of the outcome.</p>
-<p>This pattern is consistent with non-linear associations in key predictors — particularly age, BMI, and mental health days — and the absence of interaction terms in the current specification. No influential observations are identified in the Cook’s distance panel, as expected given the sample size.</p>
+<p>The binned residuals plot shows systematic deviation outside the error bounds, with residuals consistently negative across the predicted probability range. The model overpredicts diabetes probability across most of the risk distribution: the linear functional form does not fully capture the relationship between the predictors and the log-odds of the outcome.</p>
+<p>This pattern is consistent with non-linear associations in key predictors (particularly age, BMI, and mental health days) and the absence of interaction terms in the current specification. No influential observations are identified in the Cook’s distance panel, as expected given the sample size.</p>
 <p>This misfit does not invalidate the model, but it suggests that effect estimates should be interpreted with caution.</p>
 <hr>
 </section>
@@ -638,7 +638,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="7" class="anchored" data-anchor-id="results"><span class="header-section-number">7</span> Results</h2>
 <section id="adjusted-odds-ratios" class="level3" data-number="7.1">
 <h3 data-number="7.1" class="anchored" data-anchor-id="adjusted-odds-ratios"><span class="header-section-number">7.1</span> Adjusted odds ratios</h3>
-<p>The primary result of this analysis is the set of adjusted ORs from the full multivariable model — the estimated odds of diabetes for each predictor level, holding all other predictors constant.</p>
+<p>The primary result of this analysis is the set of adjusted ORs from the full multivariable model: the estimated odds of diabetes for each predictor level, holding all other predictors constant.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -662,7 +662,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bold_p</span>(<span class="at">t =</span> <span class="fl">0.05</span>) <span class="sc">|&gt;</span></span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bold_labels</span>() <span class="sc">|&gt;</span></span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 1.** Adjusted odds ratios - full social determinants model"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 1.** Adjusted odds ratios from the full social determinants model"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="swcswjtxmq" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
@@ -1116,7 +1116,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 <table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
-<caption><strong>Table 1.</strong> Adjusted odds ratios - full social determinants model</caption>
+<caption><strong>Table 1.</strong> Adjusted odds ratios from the full social determinants model</caption>
 <colgroup>
 <col style="width: 25%">
 <col style="width: 25%">
@@ -1515,7 +1515,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="forest-plot" class="level3" data-number="7.2">
 <h3 data-number="7.2" class="anchored" data-anchor-id="forest-plot"><span class="header-section-number">7.2</span> Forest plot</h3>
-<p>A visual complement to Table 1. Points show adjusted odds ratios for each predictor level, with horizontal bars representing 95% confidence intervals. The dashed line at OR = 1 marks the null (no association), and the x-axis is on a log scale, so equal distances represent equal multiplicative changes in odds. Predictors are split across two figures by substantive domain.</p>
+<p>A visual complement to Table 1. Points show adjusted odds ratios for each predictor level, with horizontal bars representing 95% confidence intervals. The dashed line at OR = 1 marks the null (no association), and the x-axis is on a log scale, so equal distances represent equal multiplicative changes in odds. Predictors are split across two figures by domain.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1569,13 +1569,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="logistic-regression_files/figure-html/results-forest-demo-1.png" class="img-fluid figure-img" width="960"></p>
-<figcaption>Adjusted ORs with 95% CIs — demographic and socioeconomic predictors</figcaption>
+<figcaption>Adjusted ORs with 95% CIs: demographic and socioeconomic predictors</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p>The demographic and socioeconomic panel shows a clear gradient in diabetes risk. Age is the dominant predictor, with odds increasing sharply and monotonically across older age groups. Income and education show consistent inverse gradients, with lower socioeconomic status associated with higher odds of diabetes.</p>
-<p>Race and ethnicity show consistently elevated adjusted odds across most groups, with Asian, AI/AN, Black, and Pacific Islander respondents all showing ORs above 1.6 relative to White respondents. Intervals are wider for smaller subgroups, consistent with the uneven sample composition observed in the EDA. Sex shows a precisely estimated association in the expected direction: female respondents have approximately 30% lower adjusted odds of diagnosis, smaller in magnitude than age or BMI but not negligible.</p>
+<p>Race and ethnicity show elevated adjusted odds across most groups, with Asian, AI/AN, Black, and Pacific Islander respondents all above OR 1.6 relative to White respondents. Intervals are wider for smaller subgroups, consistent with the uneven sample composition seen in the EDA. Sex shows a precisely estimated association in the expected direction: female respondents have roughly 30% lower adjusted odds, smaller than the age or BMI effects but not negligible.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1601,18 +1601,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="logistic-regression_files/figure-html/results-forest-behav-1.png" class="img-fluid figure-img" width="960"></p>
-<figcaption>Adjusted ORs with 95% CIs — behavioural and clinical predictors</figcaption>
+<figcaption>Adjusted ORs with 95% CIs: behavioural and clinical predictors</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p>The behavioural and clinical panel is dominated by BMI, which shows a strong gradient in risk. Odds of diabetes increase substantially from overweight to obese, while underweight is associated with lower odds, making BMI the largest modifiable predictor in the model.</p>
 <p>Physical inactivity and poor mental health are both associated with higher odds of diabetes, with mental health showing a graded pattern across categories. These effects are smaller than BMI but remain consistent in direction.</p>
-<p>Smoking shows a non-monotonic pattern, with former smokers at higher odds than current smokers. This is consistent with reverse causation, where individuals may quit smoking following diagnosis. Similar patterns appear for heavy drinking and having a personal doctor, both of which show associations that are unlikely to reflect causal effects and are more plausibly explained by behavioural change or healthcare access following diagnosis.</p>
+<p>Smoking shows a non-monotonic pattern, with former smokers at higher odds than current smokers. This is consistent with reverse causation: people may quit smoking after diagnosis. Similar patterns appear for heavy drinking and having a personal doctor; neither is plausibly causal, and both are better explained by behaviour change or healthcare access following diagnosis.</p>
 </section>
 <section id="unadjusted-vs-adjusted-comparison" class="level3" data-number="7.3">
 <h3 data-number="7.3" class="anchored" data-anchor-id="unadjusted-vs-adjusted-comparison"><span class="header-section-number">7.3</span> Unadjusted vs adjusted comparison</h3>
-<p>Comparing unadjusted and adjusted odds ratios highlights confounding between predictors. Changes in estimates after adjustment indicate that part of the crude association was explained by other variables in the model.</p>
+<p>Comparing unadjusted and adjusted odds ratios highlights confounding: where an estimate changes after adjustment, part of the crude association was explained by other variables in the model.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -2833,9 +2833,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The crude-to-adjusted comparison shows how much of each association is explained by other predictors in the model. Several socioeconomic and behavioural effects attenuate after adjustment, particularly income, education, physical activity, and smoking, indicating that part of their crude association was shared with age and BMI.</p>
+<p>Several socioeconomic and behavioural effects attenuate after adjustment, particularly income, education, physical activity, and smoking, indicating that part of their crude association was shared with age and BMI.</p>
 <p>In contrast, age and BMI remain strong with only modest attenuation, suggesting these are more robust associations in the data. The age gradient persists after adjustment, with the 75+ group retaining an OR of 17.4. The obesity effect is similarly stable (3.52 → 3.21), remaining the largest modifiable predictor in the model.</p>
-<p>Some predictors change direction or strengthen after adjustment, highlighting more complex confounding. Asian ethnicity shifts from a protective crude association to a higher adjusted odds (0.79 → 1.94). This reflects confounding by socioeconomic status: in the crude analysis, higher average income and education levels suppress the underlying association, which becomes visible after adjustment. The 1–13 mental health day group shows a weaker reversal (0.76 → 1.13), likely reflecting adjustment for correlated behavioural and social factors. These reversals illustrate why comparing crude and adjusted estimates is necessary in observational analyses, rather than a formality.</p>
+<p>Some predictors change direction or strengthen after adjustment, highlighting more complex confounding. Asian ethnicity shifts from a protective crude association to elevated adjusted odds (0.79 → 1.94). This reflects confounding by socioeconomic status: in the crude analysis, higher average income and education levels suppress the underlying association, which becomes visible after adjustment. The 1-13 mental health day group shows a weaker reversal (0.76 → 1.13), likely reflecting adjustment for correlated behavioural and social factors. Reversals like these are why the crude-to-adjusted comparison is more than a formality in observational analyses.</p>
 <hr>
 </section>
 </section>
@@ -2843,7 +2843,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="8" class="anchored" data-anchor-id="model-performance"><span class="header-section-number">8</span> Model Performance</h2>
 <p>Model performance is assessed in terms of discrimination and calibration before interpreting predicted probabilities.</p>
 <section id="discrimination-roc-curve-and-auc" class="level3" data-number="8.1">
-<h3 data-number="8.1" class="anchored" data-anchor-id="discrimination-roc-curve-and-auc"><span class="header-section-number">8.1</span> Discrimination — ROC curve and AUC</h3>
+<h3 data-number="8.1" class="anchored" data-anchor-id="discrimination-roc-curve-and-auc"><span class="header-section-number">8.1</span> Discrimination: ROC curve and AUC</h3>
 <p>The ROC curve and AUC assess whether the model assigns higher predicted probabilities to respondents with diabetes, indicating how well it ranks risk across the sample.</p>
 <div class="cell">
 <details class="code-fold">
@@ -2859,22 +2859,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="fl">0.35</span>, <span class="at">y =</span> <span class="fl">0.1</span>,</span>
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">label =</span> <span class="fu">paste0</span>(<span class="st">"AUC = "</span>, <span class="fu">round</span>(<span class="fu">auc</span>(roc_obj), <span class="dv">3</span>)),</span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">size =</span> <span class="fl">4.5</span>) <span class="sc">+</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"ROC Curve — Full Model"</span>, <span class="at">x =</span> <span class="st">"Specificity"</span>, <span class="at">y =</span> <span class="st">"Sensitivity"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"ROC Curve: Full Model"</span>, <span class="at">x =</span> <span class="st">"Specificity"</span>, <span class="at">y =</span> <span class="st">"Sensitivity"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="logistic-regression_files/figure-html/performance-roc-1.png" class="img-fluid figure-img" width="576"></p>
-<figcaption>ROC curve — full social determinants model</figcaption>
+<figcaption>ROC curve: full social determinants model</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>The model achieves an AUC of 0.771: if a respondent with diabetes and a respondent without are selected at random, the model assigns a higher predicted probability to the case 77.1% of the time. The predictors are demographic, socioeconomic, and self-reported behavioural measures, none of which directly measure metabolic function — clinical markers such as fasting glucose or HbA1c are not available in BRFSS. The next section quantifies how much the socioeconomic and behavioural predictors contribute beyond age, sex, and race/ethnicity alone.</p>
+<p>The model achieves an AUC of 0.771: if a respondent with diabetes and a respondent without are selected at random, the model assigns a higher predicted probability to the case 77.1% of the time. The predictors are demographic, socioeconomic, and self-reported behavioural measures, none of which directly measure metabolic function; clinical markers such as fasting glucose or HbA1c are not available in BRFSS. The next section quantifies how much the socioeconomic and behavioural predictors contribute beyond age, sex, and race/ethnicity alone.</p>
 </section>
-<section id="incremental-value-of-sdoh-base-model-vs-full-model" class="level3" data-number="8.2">
-<h3 data-number="8.2" class="anchored" data-anchor-id="incremental-value-of-sdoh-base-model-vs-full-model"><span class="header-section-number">8.2</span> Incremental value of SDoH — base model vs full model</h3>
-<p>A base model including age, sex, and race/ethnicity provides a reference point for model performance. Comparing its AUC to the full model shows how much additional discrimination is contributed by the socioeconomic and behavioural predictors.</p>
+<section id="incremental-value-of-the-social-and-behavioural-predictors" class="level3" data-number="8.2">
+<h3 data-number="8.2" class="anchored" data-anchor-id="incremental-value-of-the-social-and-behavioural-predictors"><span class="header-section-number">8.2</span> Incremental value of the social and behavioural predictors</h3>
+<p>A base model including age, sex, and race/ethnicity provides a reference point. Comparing its AUC with the full model’s shows how much discrimination the socioeconomic and behavioural predictors add.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -2911,13 +2911,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a><span class="do">##   0.7712646   0.6960712</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<p>The base model (age, sex, race/ethnicity) achieves an AUC of 0.696, compared with 0.771 for the full model (ΔAUC = 0.075). This increase reflects the additional discrimination provided by the socioeconomic and behavioural predictors beyond demographic structure alone.</p>
+<p>The base model (age, sex, race/ethnicity) achieves an AUC of 0.696, compared with 0.771 for the full model (ΔAUC = 0.075).</p>
 <p>The DeLong test confirms that this difference is not due to sampling variation (p &lt; 0.001), but the magnitude is more informative than the p-value here: the added predictors improve risk ranking, but do not fundamentally change the model’s ability to separate cases from non-cases.</p>
 </section>
 <section id="calibration" class="level3" data-number="8.3">
 <h3 data-number="8.3" class="anchored" data-anchor-id="calibration"><span class="header-section-number">8.3</span> Calibration</h3>
-<p>The Hosmer–Lemeshow test compares observed and expected event counts across deciles of predicted risk. A significant p-value indicates a difference between predicted and observed rates within these groups.</p>
-<p>At this sample size (287,804), the test has sufficient power to detect very small deviations, so a near-zero p-value is expected even when calibration is visually close. The p-value alone is insufficient — the calibration plot provides the more complete picture.</p>
+<p>The Hosmer-Lemeshow test compares observed and expected event counts across deciles of predicted risk. A significant p-value indicates a difference between predicted and observed rates within these groups.</p>
+<p>At this sample size (287,804), the test has sufficient power to detect very small deviations, so a near-zero p-value is expected even when calibration is visually close. The p-value alone is insufficient; the calibration plot provides the more complete picture.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -2940,14 +2940,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>()) <span class="sc">+</span></span>
 <span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>()) <span class="sc">+</span></span>
 <span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Mean predicted probability"</span>, <span class="at">y =</span> <span class="st">"Observed proportion"</span>,</span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Calibration plot — predicted vs observed</span><span class="sc">\n</span><span class="st">(by decile of predicted risk)"</span>) <span class="sc">+</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Calibration plot: predicted vs observed</span><span class="sc">\n</span><span class="st">(by decile of predicted risk)"</span>) <span class="sc">+</span></span>
 <span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="logistic-regression_files/figure-html/performance-calibration-1.png" class="img-fluid figure-img" width="576"></p>
-<figcaption>Calibration plot — mean predicted probability vs observed proportion by decile</figcaption>
+<figcaption>Calibration plot: mean predicted probability vs observed proportion by decile</figcaption>
 </figure>
 </div>
 </div>
@@ -2966,7 +2966,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="do">## X-squared = 124.21, df = 8, p-value &lt; 2.2e-16</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<p>The test returns X² = 124.21 (df = 8, p &lt; 0.001). As expected at this sample size, the result is significant and reflects small deviations from perfect calibration. The calibration plot provides the more substantive assessment of fit.</p>
+<p>The test returns X² = 124.21 (df = 8, p &lt; 0.001). As expected at this sample size, the result is significant and reflects small deviations from perfect calibration.</p>
 <p>Taken together, these checks address two questions: whether the model separates higher- from lower-risk respondents, and whether predicted probabilities align with observed rates. Here, they matter less for classification and more as evidence that the model is behaving consistently enough to support interpretation of the adjusted odds ratios.</p>
 <hr>
 </section>
@@ -2975,20 +2975,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="9" class="anchored" data-anchor-id="conclusions"><span class="header-section-number">9</span> Conclusions</h2>
 <section id="key-findings" class="level3" data-number="9.1">
 <h3 data-number="9.1" class="anchored" data-anchor-id="key-findings"><span class="header-section-number">9.1</span> Key findings</h3>
-<p>Obesity carries the highest adjusted odds in the model, with respondents in the obese BMI category having 3.21 times the odds of a diabetes diagnosis compared to those at normal weight. Age shows the steepest gradient: adjusted odds rise through each successive band, reaching OR 17.4 for the 75+ group relative to 18–34 year olds.</p>
-<p>A clear income gradient persists after adjustment, with odds increasing from OR 1.21 in the $50k–$100k group to OR 1.86 in the lowest income bracket, compared to respondents earning over $100k. Racial and ethnic disparities are similarly robust, with Asian, American Indian or Alaska Native, and Black respondents all showing elevated adjusted odds relative to White respondents (OR 1.94, 1.83, and 1.63, respectively), indicating these associations are not fully explained by the socioeconomic and behavioural variables included in the model.</p>
+<p>Obesity carries the highest adjusted odds in the model, with respondents in the obese BMI category having 3.21 times the odds of a diabetes diagnosis compared to those at normal weight. Age shows the steepest gradient: adjusted odds rise through each successive band, reaching OR 17.4 for the 75+ group relative to 18-34 year olds.</p>
+<p>A clear income gradient persists after adjustment, with odds increasing from OR 1.21 in the $50k-$100k group to OR 1.86 in the lowest income bracket, compared to respondents earning over $100k. Racial and ethnic disparities are similarly robust, with Asian, American Indian or Alaska Native, and Black respondents all showing elevated adjusted odds relative to White respondents (OR 1.94, 1.83, and 1.63, respectively), so these associations are not fully explained by the socioeconomic and behavioural variables in the model.</p>
 <p>Physical inactivity and poor mental health are independently associated with higher odds (OR 1.58 and 1.43 for 14+ poor mental health days, respectively). In contrast, two predictors show inverse associations: having no personal doctor (OR 0.337) and heavy drinking (OR 0.484). These are unlikely to reflect protective effects. Respondents without a provider are less likely to have received a diagnosis, while the heavy drinking association likely reflects detection bias or behavioural change following diagnosis. Former smokers show modestly elevated odds (OR 1.09), consistent with a similar pattern of cessation after diagnosis.</p>
 </section>
 <section id="model-performance-1" class="level3" data-number="9.2">
 <h3 data-number="9.2" class="anchored" data-anchor-id="model-performance-1"><span class="header-section-number">9.2</span> Model performance</h3>
-<p>The full model achieves an AUC of 0.771, compared to 0.696 for the base demographic model, confirming that socioeconomic and behavioural predictors add meaningful discrimination beyond age, sex, and race/ethnicity alone. The calibration plot shows predicted probabilities are well-aligned with observed rates across the risk distribution. The Hosmer-Lemeshow p-value is significant, as expected at this sample size, and does not indicate poor fit.</p>
+<p>The full model achieves an AUC of 0.771, compared to 0.696 for the base demographic model, confirming that socioeconomic and behavioural predictors add meaningful discrimination beyond age, sex, and race/ethnicity alone. The calibration plot shows predicted probabilities are well aligned with observed rates across the risk distribution. The Hosmer-Lemeshow p-value is significant, as expected at this sample size, and does not indicate poor fit.</p>
 </section>
 <section id="limitations" class="level3" data-number="9.3">
 <h3 data-number="9.3" class="anchored" data-anchor-id="limitations"><span class="header-section-number">9.3</span> Limitations</h3>
 <p><strong>Cross-sectional design.</strong> Diabetes status and all predictors are measured at the same point in time. The direction of causality cannot be established. For example, diabetes diagnosis may prompt changes in physical activity or diet rather than the reverse.</p>
 <p><strong>Unweighted analysis.</strong> BRFSS uses a complex survey design with stratification, clustering, and post-stratification weights to produce nationally representative estimates. This analysis uses unweighted logistic regression, which produces valid associations within the sample but does not account for the survey design. Population-level prevalence estimates and fully representative ORs would require <code>svyglm()</code> from the <code>survey</code> package with the provided <code>psu</code>, <code>strata</code>, and <code>llcp_weight</code> variables.</p>
-<p><strong>Self-reported outcome.</strong> Diabetes status is based on self-report of a prior diagnosis. Undiagnosed diabetes, estimated to affect roughly 1 in 4 people with the condition, is not captured, which likely biases associations involving healthcare access toward the null.</p>
-<p><strong>Complete-case analysis.</strong> Respondents with missing predictor values were excluded (36.5%, n = 165,437), driven primarily by income-group non-response. If lower-income respondents are more likely to skip the question, the income gradient may be attenuated; the opposite pattern would inflate it. The missingness mechanism cannot be verified from these data.</p>
+<p><strong>Self-reported outcome.</strong> Diabetes status is based on self-report of a prior diagnosis. Undiagnosed diabetes, estimated to affect roughly 1 in 4 people with the condition, is not captured, which likely biases associations involving healthcare access towards the null.</p>
+<p><strong>Complete-case analysis.</strong> Respondents with missing predictor values were excluded (36.5%, n = 165,437), driven primarily by income-group nonresponse. If lower-income respondents are more likely to skip the question, the income gradient may be attenuated; the opposite pattern would inflate it. The missingness mechanism cannot be verified from these data.</p>
 <hr>
 </section>
 </section>
@@ -3527,7 +3527,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Multivariable Logistic Regression Analysis · n = 287,804"</span></span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>This notebook estimates adjusted associations between diabetes status and a set of demographic, socioeconomic, and behavioural predictors using multivariable logistic regression.</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>This notebook estimates adjusted associations between diabetes status and demographic, socioeconomic, and behavioural predictors using multivariable logistic regression.</span>
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>The data come from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a nationally representative telephone survey of U.S. adults conducted annually by the CDC. The analysis examines whether these factors remain associated with diabetes status after adjustment for confounding.</span>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
@@ -3543,13 +3543,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
 <span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span>
 <span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)            <span class="co"># tidy() — extract model coefficients as a data frame</span></span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)              <span class="co"># vif() — variance inflation factors</span></span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(performance)      <span class="co"># check_model() — visual diagnostic plots</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)            <span class="co"># tidy(): extract model coefficients as a data frame</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)              <span class="co"># vif(): variance inflation factors</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(performance)      <span class="co"># check_model(): visual diagnostic plots</span></span>
 <span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(see)              <span class="co"># plotting backend for performance</span></span>
 <span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)        <span class="co"># plot composition and annotation</span></span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pROC)             <span class="co"># roc(), auc(), ggroc() — ROC curve and AUC</span></span>
-<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ResourceSelection) <span class="co"># hoslem.test() — Hosmer-Lemeshow goodness-of-fit</span></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pROC)             <span class="co"># roc(), auc(), ggroc(): ROC curve and AUC</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ResourceSelection) <span class="co"># hoslem.test(): Hosmer-Lemeshow goodness-of-fit</span></span>
 <span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"utils.R"</span>))</span>
 <span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"plot_theme.R"</span>))</span>
@@ -3579,7 +3579,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a><span class="fu">### Factor levels and reference categories</span></span>
 <span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a>Reference categories determine the comparison group for each odds ratio. We set these to substantively meaningful baselines — typically the lowest-risk or most socioeconomically advantaged group — so that estimated effects reflect higher risk relative to a favourable exposure level, making the direction of associations intuitive.</span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a>Reference categories determine the comparison group for each odds ratio. We set these to meaningful baselines (typically the lowest-risk or most advantaged group) so that estimated effects read as higher risk relative to a favourable exposure level, keeping the direction of associations intuitive.</span>
 <span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: prep-factors</span></span>
@@ -3634,7 +3634,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-116"><a href="#cb19-116" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-117"><a href="#cb19-117" aria-hidden="true" tabindex="-1"></a><span class="fu">### Complete-case exclusions</span></span>
 <span id="cb19-118"><a href="#cb19-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-119"><a href="#cb19-119" aria-hidden="true" tabindex="-1"></a><span class="in">`glm()`</span> requires no missing values. Rows with a missing value on any predictor are dropped here, and the retained dataset <span class="in">`df_cc`</span> is used for all subsequent modelling.</span>
+<span id="cb19-119"><a href="#cb19-119" aria-hidden="true" tabindex="-1"></a><span class="in">`glm()`</span> cannot use rows with missing values, so any row missing a predictor is dropped here. The retained dataset <span class="in">`df_cc`</span> is used for all subsequent modelling.</span>
 <span id="cb19-120"><a href="#cb19-120" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-123"><a href="#cb19-123" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-124"><a href="#cb19-124" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: complete-cases</span></span>
@@ -3654,13 +3654,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-138"><a href="#cb19-138" aria-hidden="true" tabindex="-1"></a>    <span class="st">"("</span>, <span class="fu">round</span>((n_before <span class="sc">-</span> n_after) <span class="sc">/</span> n_before <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)</span><span class="sc">\n</span><span class="st">"</span>)</span>
 <span id="cb19-139"><a href="#cb19-139" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-140"><a href="#cb19-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-141"><a href="#cb19-141" aria-hidden="true" tabindex="-1"></a><span class="in">`r round((nrow(df) - nrow(df_cc)) / nrow(df) * 100, 1)`</span>% of respondents are excluded, largely due to the 25.5% income-group missingness identified in the EDA. The reason for this missingness is unknown; if lower-income respondents are more likely to skip the question, the estimated income gradient may be attenuated under complete-case analysis, while the opposite pattern would bias estimates in the other direction. This is the main limitation of the complete-case specification in this model.</span>
+<span id="cb19-141"><a href="#cb19-141" aria-hidden="true" tabindex="-1"></a><span class="in">`r round((nrow(df) - nrow(df_cc)) / nrow(df) * 100, 1)`</span>% of respondents are excluded, largely due to the 25.5% income-group missingness identified in the EDA. The reason for this missingness is unknown; if lower-income respondents are more likely to skip the question, the estimated income gradient may be attenuated, and the reverse would inflate it. This is the main limitation of the complete-case approach.</span>
 <span id="cb19-142"><a href="#cb19-142" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-143"><a href="#cb19-143" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb19-144"><a href="#cb19-144" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-145"><a href="#cb19-145" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Specification</span></span>
 <span id="cb19-146"><a href="#cb19-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-147"><a href="#cb19-147" aria-hidden="true" tabindex="-1"></a>The outcome — diabetes diagnosis — is binary, so logistic regression is used to model the log-odds of the outcome as a function of the predictors. Coefficients are exponentiated and reported as odds ratios (ORs), the standard effect measure for cross-sectional analyses of this type.</span>
+<span id="cb19-147"><a href="#cb19-147" aria-hidden="true" tabindex="-1"></a>The outcome, diabetes diagnosis, is binary, so logistic regression models the log-odds of diagnosis as a function of the predictors. Coefficients are exponentiated and reported as odds ratios (ORs), the standard effect measure for this kind of cross-sectional analysis.</span>
 <span id="cb19-148"><a href="#cb19-148" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-149"><a href="#cb19-149" aria-hidden="true" tabindex="-1"></a>All 11 predictors are entered simultaneously rather than selected stepwise. Stepwise procedures can improve apparent fit in-sample but tend to produce unstable estimates and inflated Type I error. The aim here is to estimate the adjusted association of each predictor with diabetes status, so a theory-driven full model is preferred.</span>
 <span id="cb19-150"><a href="#cb19-150" aria-hidden="true" tabindex="-1"></a></span>
@@ -3679,7 +3679,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-165"><a href="#cb19-165" aria-hidden="true" tabindex="-1"></a>model_formula</span>
 <span id="cb19-166"><a href="#cb19-166" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-167"><a href="#cb19-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-168"><a href="#cb19-168" aria-hidden="true" tabindex="-1"></a>We are using an associational model fit to cross-sectional data, so it estimates adjusted odds rather than causal effects. Diabetes status and the predictors are measured at the same point in time, so the direction of causality cannot be established from this data alone.</span>
+<span id="cb19-168"><a href="#cb19-168" aria-hidden="true" tabindex="-1"></a>This is an associational model fit to cross-sectional data: it estimates adjusted odds, not causal effects. Diabetes status and the predictors are measured at the same point in time, so the direction of causality cannot be established from these data alone.</span>
 <span id="cb19-169"><a href="#cb19-169" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-170"><a href="#cb19-170" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb19-171"><a href="#cb19-171" aria-hidden="true" tabindex="-1"></a></span>
@@ -3708,7 +3708,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-196"><a href="#cb19-196" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-197"><a href="#cb19-197" aria-hidden="true" tabindex="-1"></a>Model fit alone does not guarantee reliable estimates, so key assumptions are checked before interpreting coefficients.</span>
 <span id="cb19-198"><a href="#cb19-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-199"><a href="#cb19-199" aria-hidden="true" tabindex="-1"></a><span class="fu">### Multicollinearity — VIF</span></span>
+<span id="cb19-199"><a href="#cb19-199" aria-hidden="true" tabindex="-1"></a><span class="fu">### Multicollinearity: VIF</span></span>
 <span id="cb19-200"><a href="#cb19-200" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-201"><a href="#cb19-201" aria-hidden="true" tabindex="-1"></a>Highly correlated predictors inflate standard errors and make individual coefficients unstable, even when overall model fit is acceptable. Variance inflation factors (VIFs) quantify this inflation for each predictor.</span>
 <span id="cb19-202"><a href="#cb19-202" aria-hidden="true" tabindex="-1"></a></span>
@@ -3719,7 +3719,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-209"><a href="#cb19-209" aria-hidden="true" tabindex="-1"></a><span class="fu">vif</span>(mod)</span>
 <span id="cb19-210"><a href="#cb19-210" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-211"><a href="#cb19-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-212"><a href="#cb19-212" aria-hidden="true" tabindex="-1"></a>Because several predictors are multi-level categorical variables, <span class="in">`car::vif()`</span> reports generalized VIFs (GVIF). The adjusted values, GVIF^(1/(2·Df)), are all below 1.05 — well under the conventional threshold of 2 — indicating no meaningful collinearity.</span>
+<span id="cb19-212"><a href="#cb19-212" aria-hidden="true" tabindex="-1"></a>Because several predictors are multi-level categorical variables, <span class="in">`car::vif()`</span> reports generalised VIFs (GVIF). The adjusted values, GVIF^(1/(2·Df)), are all below 1.05, well under the conventional threshold of 2, indicating no meaningful collinearity.</span>
 <span id="cb19-213"><a href="#cb19-213" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-214"><a href="#cb19-214" aria-hidden="true" tabindex="-1"></a>Income and education show slightly higher values than the other predictors, consistent with their expected correlation in the population, but neither approaches a level that would inflate standard errors or destabilise coefficient estimates.</span>
 <span id="cb19-215"><a href="#cb19-215" aria-hidden="true" tabindex="-1"></a></span>
@@ -3761,9 +3761,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-253"><a href="#cb19-253" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb19-254"><a href="#cb19-254" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-255"><a href="#cb19-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-256"><a href="#cb19-256" aria-hidden="true" tabindex="-1"></a>The binned residuals plot shows systematic deviation outside the error bounds, with residuals consistently negative across the predicted probability range. The model overpredicts diabetes probability across most of the risk distribution, indicating that the linear functional form does not fully capture the relationship between the predictors and the log-odds of the outcome.</span>
+<span id="cb19-256"><a href="#cb19-256" aria-hidden="true" tabindex="-1"></a>The binned residuals plot shows systematic deviation outside the error bounds, with residuals consistently negative across the predicted probability range. The model overpredicts diabetes probability across most of the risk distribution: the linear functional form does not fully capture the relationship between the predictors and the log-odds of the outcome.</span>
 <span id="cb19-257"><a href="#cb19-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-258"><a href="#cb19-258" aria-hidden="true" tabindex="-1"></a>This pattern is consistent with non-linear associations in key predictors — particularly age, BMI, and mental health days — and the absence of interaction terms in the current specification. No influential observations are identified in the Cook's distance panel, as expected given the sample size.</span>
+<span id="cb19-258"><a href="#cb19-258" aria-hidden="true" tabindex="-1"></a>This pattern is consistent with non-linear associations in key predictors (particularly age, BMI, and mental health days) and the absence of interaction terms in the current specification. No influential observations are identified in the Cook's distance panel, as expected given the sample size.</span>
 <span id="cb19-259"><a href="#cb19-259" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-260"><a href="#cb19-260" aria-hidden="true" tabindex="-1"></a>This misfit does not invalidate the model, but it suggests that effect estimates should be interpreted with caution.</span>
 <span id="cb19-261"><a href="#cb19-261" aria-hidden="true" tabindex="-1"></a></span>
@@ -3773,7 +3773,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-265"><a href="#cb19-265" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-266"><a href="#cb19-266" aria-hidden="true" tabindex="-1"></a><span class="fu">### Adjusted odds ratios</span></span>
 <span id="cb19-267"><a href="#cb19-267" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-268"><a href="#cb19-268" aria-hidden="true" tabindex="-1"></a>The primary result of this analysis is the set of adjusted ORs from the full multivariable model — the estimated odds of diabetes for each predictor level, holding all other predictors constant.</span>
+<span id="cb19-268"><a href="#cb19-268" aria-hidden="true" tabindex="-1"></a>The primary result of this analysis is the set of adjusted ORs from the full multivariable model: the estimated odds of diabetes for each predictor level, holding all other predictors constant.</span>
 <span id="cb19-269"><a href="#cb19-269" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-272"><a href="#cb19-272" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-273"><a href="#cb19-273" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: results-adjusted</span></span>
@@ -3798,18 +3798,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-292"><a href="#cb19-292" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
 <span id="cb19-293"><a href="#cb19-293" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bold_p</span>(<span class="at">t =</span> <span class="fl">0.05</span>) <span class="sc">|&gt;</span></span>
 <span id="cb19-294"><a href="#cb19-294" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bold_labels</span>() <span class="sc">|&gt;</span></span>
-<span id="cb19-295"><a href="#cb19-295" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 1.** Adjusted odds ratios - full social determinants model"</span>)</span>
+<span id="cb19-295"><a href="#cb19-295" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 1.** Adjusted odds ratios from the full social determinants model"</span>)</span>
 <span id="cb19-296"><a href="#cb19-296" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-297"><a href="#cb19-297" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-298"><a href="#cb19-298" aria-hidden="true" tabindex="-1"></a>The adjusted model shows the strongest associations for BMI and age, with obesity and older age groups carrying substantially higher odds of diabetes than their reference categories. Lower income groups also retain elevated odds after adjustment, indicating that the socioeconomic gradient is not fully explained by the behavioural and clinical predictors in the model. Several smaller effects remain directionally consistent with the EDA, though their magnitude and precision vary once the predictors are considered jointly.</span>
 <span id="cb19-299"><a href="#cb19-299" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-300"><a href="#cb19-300" aria-hidden="true" tabindex="-1"></a><span class="fu">### Forest plot</span></span>
 <span id="cb19-301"><a href="#cb19-301" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-302"><a href="#cb19-302" aria-hidden="true" tabindex="-1"></a>A visual complement to Table 1. Points show adjusted odds ratios for each predictor level, with horizontal bars representing 95% confidence intervals. The dashed line at OR = 1 marks the null (no association), and the x-axis is on a log scale, so equal distances represent equal multiplicative changes in odds. Predictors are split across two figures by substantive domain.</span>
+<span id="cb19-302"><a href="#cb19-302" aria-hidden="true" tabindex="-1"></a>A visual complement to Table 1. Points show adjusted odds ratios for each predictor level, with horizontal bars representing 95% confidence intervals. The dashed line at OR = 1 marks the null (no association), and the x-axis is on a log scale, so equal distances represent equal multiplicative changes in odds. Predictors are split across two figures by domain.</span>
 <span id="cb19-303"><a href="#cb19-303" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-306"><a href="#cb19-306" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-307"><a href="#cb19-307" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: results-forest-demo</span></span>
-<span id="cb19-308"><a href="#cb19-308" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Adjusted ORs with 95% CIs — demographic and socioeconomic predictors"</span></span>
+<span id="cb19-308"><a href="#cb19-308" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Adjusted ORs with 95% CIs: demographic and socioeconomic predictors"</span></span>
 <span id="cb19-309"><a href="#cb19-309" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 10</span></span>
 <span id="cb19-310"><a href="#cb19-310" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 10</span></span>
 <span id="cb19-311"><a href="#cb19-311" aria-hidden="true" tabindex="-1"></a></span>
@@ -3862,11 +3862,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-358"><a href="#cb19-358" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-359"><a href="#cb19-359" aria-hidden="true" tabindex="-1"></a>The demographic and socioeconomic panel shows a clear gradient in diabetes risk. Age is the dominant predictor, with odds increasing sharply and monotonically across older age groups. Income and education show consistent inverse gradients, with lower socioeconomic status associated with higher odds of diabetes.</span>
 <span id="cb19-360"><a href="#cb19-360" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-361"><a href="#cb19-361" aria-hidden="true" tabindex="-1"></a>Race and ethnicity show consistently elevated adjusted odds across most groups, with Asian, AI/AN, Black, and Pacific Islander respondents all showing ORs above 1.6 relative to White respondents. Intervals are wider for smaller subgroups, consistent with the uneven sample composition observed in the EDA. Sex shows a precisely estimated association in the expected direction: female respondents have approximately 30% lower adjusted odds of diagnosis, smaller in magnitude than age or BMI but not negligible.</span>
+<span id="cb19-361"><a href="#cb19-361" aria-hidden="true" tabindex="-1"></a>Race and ethnicity show elevated adjusted odds across most groups, with Asian, AI/AN, Black, and Pacific Islander respondents all above OR 1.6 relative to White respondents. Intervals are wider for smaller subgroups, consistent with the uneven sample composition seen in the EDA. Sex shows a precisely estimated association in the expected direction: female respondents have roughly 30% lower adjusted odds, smaller than the age or BMI effects but not negligible.</span>
 <span id="cb19-362"><a href="#cb19-362" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-365"><a href="#cb19-365" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-366"><a href="#cb19-366" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: results-forest-behav</span></span>
-<span id="cb19-367"><a href="#cb19-367" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Adjusted ORs with 95% CIs — behavioural and clinical predictors"</span></span>
+<span id="cb19-367"><a href="#cb19-367" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Adjusted ORs with 95% CIs: behavioural and clinical predictors"</span></span>
 <span id="cb19-368"><a href="#cb19-368" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 10</span></span>
 <span id="cb19-369"><a href="#cb19-369" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 8</span></span>
 <span id="cb19-370"><a href="#cb19-370" aria-hidden="true" tabindex="-1"></a></span>
@@ -3893,11 +3893,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-391"><a href="#cb19-391" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-392"><a href="#cb19-392" aria-hidden="true" tabindex="-1"></a>Physical inactivity and poor mental health are both associated with higher odds of diabetes, with mental health showing a graded pattern across categories. These effects are smaller than BMI but remain consistent in direction.</span>
 <span id="cb19-393"><a href="#cb19-393" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-394"><a href="#cb19-394" aria-hidden="true" tabindex="-1"></a>Smoking shows a non-monotonic pattern, with former smokers at higher odds than current smokers. This is consistent with reverse causation, where individuals may quit smoking following diagnosis. Similar patterns appear for heavy drinking and having a personal doctor, both of which show associations that are unlikely to reflect causal effects and are more plausibly explained by behavioural change or healthcare access following diagnosis.</span>
+<span id="cb19-394"><a href="#cb19-394" aria-hidden="true" tabindex="-1"></a>Smoking shows a non-monotonic pattern, with former smokers at higher odds than current smokers. This is consistent with reverse causation: people may quit smoking after diagnosis. Similar patterns appear for heavy drinking and having a personal doctor; neither is plausibly causal, and both are better explained by behaviour change or healthcare access following diagnosis.</span>
 <span id="cb19-395"><a href="#cb19-395" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-396"><a href="#cb19-396" aria-hidden="true" tabindex="-1"></a><span class="fu">### Unadjusted vs adjusted comparison</span></span>
 <span id="cb19-397"><a href="#cb19-397" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-398"><a href="#cb19-398" aria-hidden="true" tabindex="-1"></a>Comparing unadjusted and adjusted odds ratios highlights confounding between predictors. Changes in estimates after adjustment indicate that part of the crude association was explained by other variables in the model.</span>
+<span id="cb19-398"><a href="#cb19-398" aria-hidden="true" tabindex="-1"></a>Comparing unadjusted and adjusted odds ratios highlights confounding: where an estimate changes after adjustment, part of the crude association was explained by other variables in the model.</span>
 <span id="cb19-399"><a href="#cb19-399" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-402"><a href="#cb19-402" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-403"><a href="#cb19-403" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: results-comparison</span></span>
@@ -3954,11 +3954,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-454"><a href="#cb19-454" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 2.** Unadjusted and adjusted odds ratios"</span>)</span>
 <span id="cb19-455"><a href="#cb19-455" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-456"><a href="#cb19-456" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-457"><a href="#cb19-457" aria-hidden="true" tabindex="-1"></a>The crude-to-adjusted comparison shows how much of each association is explained by other predictors in the model. Several socioeconomic and behavioural effects attenuate after adjustment, particularly income, education, physical activity, and smoking, indicating that part of their crude association was shared with age and BMI.</span>
+<span id="cb19-457"><a href="#cb19-457" aria-hidden="true" tabindex="-1"></a>Several socioeconomic and behavioural effects attenuate after adjustment, particularly income, education, physical activity, and smoking, indicating that part of their crude association was shared with age and BMI.</span>
 <span id="cb19-458"><a href="#cb19-458" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-459"><a href="#cb19-459" aria-hidden="true" tabindex="-1"></a>In contrast, age and BMI remain strong with only modest attenuation, suggesting these are more robust associations in the data. The age gradient persists after adjustment, with the 75+ group retaining an OR of 17.4. The obesity effect is similarly stable (3.52 → 3.21), remaining the largest modifiable predictor in the model.</span>
 <span id="cb19-460"><a href="#cb19-460" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-461"><a href="#cb19-461" aria-hidden="true" tabindex="-1"></a>Some predictors change direction or strengthen after adjustment, highlighting more complex confounding. Asian ethnicity shifts from a protective crude association to a higher adjusted odds (0.79 → 1.94). This reflects confounding by socioeconomic status: in the crude analysis, higher average income and education levels suppress the underlying association, which becomes visible after adjustment. The 1–13 mental health day group shows a weaker reversal (0.76 → 1.13), likely reflecting adjustment for correlated behavioural and social factors. These reversals illustrate why comparing crude and adjusted estimates is necessary in observational analyses, rather than a formality.</span>
+<span id="cb19-461"><a href="#cb19-461" aria-hidden="true" tabindex="-1"></a>Some predictors change direction or strengthen after adjustment, highlighting more complex confounding. Asian ethnicity shifts from a protective crude association to elevated adjusted odds (0.79 → 1.94). This reflects confounding by socioeconomic status: in the crude analysis, higher average income and education levels suppress the underlying association, which becomes visible after adjustment. The 1-13 mental health day group shows a weaker reversal (0.76 → 1.13), likely reflecting adjustment for correlated behavioural and social factors. Reversals like these are why the crude-to-adjusted comparison is more than a formality in observational analyses.</span>
 <span id="cb19-462"><a href="#cb19-462" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-463"><a href="#cb19-463" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb19-464"><a href="#cb19-464" aria-hidden="true" tabindex="-1"></a></span>
@@ -3966,13 +3966,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-466"><a href="#cb19-466" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-467"><a href="#cb19-467" aria-hidden="true" tabindex="-1"></a>Model performance is assessed in terms of discrimination and calibration before interpreting predicted probabilities.</span>
 <span id="cb19-468"><a href="#cb19-468" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-469"><a href="#cb19-469" aria-hidden="true" tabindex="-1"></a><span class="fu">### Discrimination — ROC curve and AUC</span></span>
+<span id="cb19-469"><a href="#cb19-469" aria-hidden="true" tabindex="-1"></a><span class="fu">### Discrimination: ROC curve and AUC</span></span>
 <span id="cb19-470"><a href="#cb19-470" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-471"><a href="#cb19-471" aria-hidden="true" tabindex="-1"></a>The ROC curve and AUC assess whether the model assigns higher predicted probabilities to respondents with diabetes, indicating how well it ranks risk across the sample.</span>
 <span id="cb19-472"><a href="#cb19-472" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-475"><a href="#cb19-475" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-476"><a href="#cb19-476" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: performance-roc</span></span>
-<span id="cb19-477"><a href="#cb19-477" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "ROC curve — full social determinants model"</span></span>
+<span id="cb19-477"><a href="#cb19-477" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "ROC curve: full social determinants model"</span></span>
 <span id="cb19-478"><a href="#cb19-478" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 6</span></span>
 <span id="cb19-479"><a href="#cb19-479" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 6</span></span>
 <span id="cb19-480"><a href="#cb19-480" aria-hidden="true" tabindex="-1"></a></span>
@@ -3987,14 +3987,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-489"><a href="#cb19-489" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="fl">0.35</span>, <span class="at">y =</span> <span class="fl">0.1</span>,</span>
 <span id="cb19-490"><a href="#cb19-490" aria-hidden="true" tabindex="-1"></a>           <span class="at">label =</span> <span class="fu">paste0</span>(<span class="st">"AUC = "</span>, <span class="fu">round</span>(<span class="fu">auc</span>(roc_obj), <span class="dv">3</span>)),</span>
 <span id="cb19-491"><a href="#cb19-491" aria-hidden="true" tabindex="-1"></a>           <span class="at">size =</span> <span class="fl">4.5</span>) <span class="sc">+</span></span>
-<span id="cb19-492"><a href="#cb19-492" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"ROC Curve — Full Model"</span>, <span class="at">x =</span> <span class="st">"Specificity"</span>, <span class="at">y =</span> <span class="st">"Sensitivity"</span>)</span>
+<span id="cb19-492"><a href="#cb19-492" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"ROC Curve: Full Model"</span>, <span class="at">x =</span> <span class="st">"Specificity"</span>, <span class="at">y =</span> <span class="st">"Sensitivity"</span>)</span>
 <span id="cb19-493"><a href="#cb19-493" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-494"><a href="#cb19-494" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-495"><a href="#cb19-495" aria-hidden="true" tabindex="-1"></a>The model achieves an AUC of 0.771: if a respondent with diabetes and a respondent without are selected at random, the model assigns a higher predicted probability to the case 77.1% of the time. The predictors are demographic, socioeconomic, and self-reported behavioural measures, none of which directly measure metabolic function — clinical markers such as fasting glucose or HbA1c are not available in BRFSS. The next section quantifies how much the socioeconomic and behavioural predictors contribute beyond age, sex, and race/ethnicity alone.</span>
+<span id="cb19-495"><a href="#cb19-495" aria-hidden="true" tabindex="-1"></a>The model achieves an AUC of 0.771: if a respondent with diabetes and a respondent without are selected at random, the model assigns a higher predicted probability to the case 77.1% of the time. The predictors are demographic, socioeconomic, and self-reported behavioural measures, none of which directly measure metabolic function; clinical markers such as fasting glucose or HbA1c are not available in BRFSS. The next section quantifies how much the socioeconomic and behavioural predictors contribute beyond age, sex, and race/ethnicity alone.</span>
 <span id="cb19-496"><a href="#cb19-496" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-497"><a href="#cb19-497" aria-hidden="true" tabindex="-1"></a><span class="fu">### Incremental value of SDoH — base model vs full model</span></span>
+<span id="cb19-497"><a href="#cb19-497" aria-hidden="true" tabindex="-1"></a><span class="fu">### Incremental value of the social and behavioural predictors</span></span>
 <span id="cb19-498"><a href="#cb19-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-499"><a href="#cb19-499" aria-hidden="true" tabindex="-1"></a>A base model including age, sex, and race/ethnicity provides a reference point for model performance. Comparing its AUC to the full model shows how much additional discrimination is contributed by the socioeconomic and behavioural predictors.</span>
+<span id="cb19-499"><a href="#cb19-499" aria-hidden="true" tabindex="-1"></a>A base model including age, sex, and race/ethnicity provides a reference point. Comparing its AUC with the full model's shows how much discrimination the socioeconomic and behavioural predictors add.</span>
 <span id="cb19-500"><a href="#cb19-500" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-503"><a href="#cb19-503" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-504"><a href="#cb19-504" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: performance-auc-comparison</span></span>
@@ -4019,19 +4019,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-523"><a href="#cb19-523" aria-hidden="true" tabindex="-1"></a><span class="fu">roc.test</span>(roc_obj, roc_base)</span>
 <span id="cb19-524"><a href="#cb19-524" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-525"><a href="#cb19-525" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-526"><a href="#cb19-526" aria-hidden="true" tabindex="-1"></a>The base model (age, sex, race/ethnicity) achieves an AUC of 0.696, compared with 0.771 for the full model (ΔAUC = 0.075). This increase reflects the additional discrimination provided by the socioeconomic and behavioural predictors beyond demographic structure alone.</span>
+<span id="cb19-526"><a href="#cb19-526" aria-hidden="true" tabindex="-1"></a>The base model (age, sex, race/ethnicity) achieves an AUC of 0.696, compared with 0.771 for the full model (ΔAUC = 0.075).</span>
 <span id="cb19-527"><a href="#cb19-527" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-528"><a href="#cb19-528" aria-hidden="true" tabindex="-1"></a>The DeLong test confirms that this difference is not due to sampling variation (p &lt; 0.001), but the magnitude is more informative than the p-value here: the added predictors improve risk ranking, but do not fundamentally change the model’s ability to separate cases from non-cases.</span>
 <span id="cb19-529"><a href="#cb19-529" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-530"><a href="#cb19-530" aria-hidden="true" tabindex="-1"></a><span class="fu">### Calibration</span></span>
 <span id="cb19-531"><a href="#cb19-531" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-532"><a href="#cb19-532" aria-hidden="true" tabindex="-1"></a>The Hosmer–Lemeshow test compares observed and expected event counts across deciles of predicted risk. A significant p-value indicates a difference between predicted and observed rates within these groups.</span>
+<span id="cb19-532"><a href="#cb19-532" aria-hidden="true" tabindex="-1"></a>The Hosmer-Lemeshow test compares observed and expected event counts across deciles of predicted risk. A significant p-value indicates a difference between predicted and observed rates within these groups.</span>
 <span id="cb19-533"><a href="#cb19-533" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-534"><a href="#cb19-534" aria-hidden="true" tabindex="-1"></a>At this sample size (<span class="in">`r format(nrow(df_cc), big.mark = ",")`</span>), the test has sufficient power to detect very small deviations, so a near-zero p-value is expected even when calibration is visually close. The p-value alone is insufficient — the calibration plot provides the more complete picture.</span>
+<span id="cb19-534"><a href="#cb19-534" aria-hidden="true" tabindex="-1"></a>At this sample size (<span class="in">`r format(nrow(df_cc), big.mark = ",")`</span>), the test has sufficient power to detect very small deviations, so a near-zero p-value is expected even when calibration is visually close. The p-value alone is insufficient; the calibration plot provides the more complete picture.</span>
 <span id="cb19-535"><a href="#cb19-535" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-538"><a href="#cb19-538" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb19-539"><a href="#cb19-539" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: performance-calibration</span></span>
-<span id="cb19-540"><a href="#cb19-540" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Calibration plot — mean predicted probability vs observed proportion by decile"</span></span>
+<span id="cb19-540"><a href="#cb19-540" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Calibration plot: mean predicted probability vs observed proportion by decile"</span></span>
 <span id="cb19-541"><a href="#cb19-541" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 6</span></span>
 <span id="cb19-542"><a href="#cb19-542" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 6</span></span>
 <span id="cb19-543"><a href="#cb19-543" aria-hidden="true" tabindex="-1"></a></span>
@@ -4054,7 +4054,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-560"><a href="#cb19-560" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>()) <span class="sc">+</span></span>
 <span id="cb19-561"><a href="#cb19-561" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>()) <span class="sc">+</span></span>
 <span id="cb19-562"><a href="#cb19-562" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Mean predicted probability"</span>, <span class="at">y =</span> <span class="st">"Observed proportion"</span>,</span>
-<span id="cb19-563"><a href="#cb19-563" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Calibration plot — predicted vs observed</span><span class="sc">\n</span><span class="st">(by decile of predicted risk)"</span>) <span class="sc">+</span></span>
+<span id="cb19-563"><a href="#cb19-563" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Calibration plot: predicted vs observed</span><span class="sc">\n</span><span class="st">(by decile of predicted risk)"</span>) <span class="sc">+</span></span>
 <span id="cb19-564"><a href="#cb19-564" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>))</span>
 <span id="cb19-565"><a href="#cb19-565" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-566"><a href="#cb19-566" aria-hidden="true" tabindex="-1"></a></span>
@@ -4070,7 +4070,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-578"><a href="#cb19-578" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(hl)</span>
 <span id="cb19-579"><a href="#cb19-579" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb19-580"><a href="#cb19-580" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-581"><a href="#cb19-581" aria-hidden="true" tabindex="-1"></a>The test returns X² = 124.21 (df = 8, p &lt; 0.001). As expected at this sample size, the result is significant and reflects small deviations from perfect calibration. The calibration plot provides the more substantive assessment of fit.</span>
+<span id="cb19-581"><a href="#cb19-581" aria-hidden="true" tabindex="-1"></a>The test returns X² = 124.21 (df = 8, p &lt; 0.001). As expected at this sample size, the result is significant and reflects small deviations from perfect calibration.</span>
 <span id="cb19-582"><a href="#cb19-582" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-583"><a href="#cb19-583" aria-hidden="true" tabindex="-1"></a>Taken together, these checks address two questions: whether the model separates higher- from lower-risk respondents, and whether predicted probabilities align with observed rates. Here, they matter less for classification and more as evidence that the model is behaving consistently enough to support interpretation of the adjusted odds ratios.</span>
 <span id="cb19-584"><a href="#cb19-584" aria-hidden="true" tabindex="-1"></a></span>
@@ -4080,15 +4080,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-588"><a href="#cb19-588" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-589"><a href="#cb19-589" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key findings</span></span>
 <span id="cb19-590"><a href="#cb19-590" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-591"><a href="#cb19-591" aria-hidden="true" tabindex="-1"></a>Obesity carries the highest adjusted odds in the model, with respondents in the obese BMI category having 3.21 times the odds of a diabetes diagnosis compared to those at normal weight. Age shows the steepest gradient: adjusted odds rise through each successive band, reaching OR 17.4 for the 75+ group relative to 18–34 year olds.</span>
+<span id="cb19-591"><a href="#cb19-591" aria-hidden="true" tabindex="-1"></a>Obesity carries the highest adjusted odds in the model, with respondents in the obese BMI category having 3.21 times the odds of a diabetes diagnosis compared to those at normal weight. Age shows the steepest gradient: adjusted odds rise through each successive band, reaching OR 17.4 for the 75+ group relative to 18-34 year olds.</span>
 <span id="cb19-592"><a href="#cb19-592" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-593"><a href="#cb19-593" aria-hidden="true" tabindex="-1"></a>A clear income gradient persists after adjustment, with odds increasing from OR 1.21 in the $50k–$100k group to OR 1.86 in the lowest income bracket, compared to respondents earning over $100k. Racial and ethnic disparities are similarly robust, with Asian, American Indian or Alaska Native, and Black respondents all showing elevated adjusted odds relative to White respondents (OR 1.94, 1.83, and 1.63, respectively), indicating these associations are not fully explained by the socioeconomic and behavioural variables included in the model.</span>
+<span id="cb19-593"><a href="#cb19-593" aria-hidden="true" tabindex="-1"></a>A clear income gradient persists after adjustment, with odds increasing from OR 1.21 in the $50k-$100k group to OR 1.86 in the lowest income bracket, compared to respondents earning over $100k. Racial and ethnic disparities are similarly robust, with Asian, American Indian or Alaska Native, and Black respondents all showing elevated adjusted odds relative to White respondents (OR 1.94, 1.83, and 1.63, respectively), so these associations are not fully explained by the socioeconomic and behavioural variables in the model.</span>
 <span id="cb19-594"><a href="#cb19-594" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-595"><a href="#cb19-595" aria-hidden="true" tabindex="-1"></a>Physical inactivity and poor mental health are independently associated with higher odds (OR 1.58 and 1.43 for 14+ poor mental health days, respectively). In contrast, two predictors show inverse associations: having no personal doctor (OR 0.337) and heavy drinking (OR 0.484). These are unlikely to reflect protective effects. Respondents without a provider are less likely to have received a diagnosis, while the heavy drinking association likely reflects detection bias or behavioural change following diagnosis. Former smokers show modestly elevated odds (OR 1.09), consistent with a similar pattern of cessation after diagnosis.</span>
 <span id="cb19-596"><a href="#cb19-596" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-597"><a href="#cb19-597" aria-hidden="true" tabindex="-1"></a><span class="fu">### Model performance</span></span>
 <span id="cb19-598"><a href="#cb19-598" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-599"><a href="#cb19-599" aria-hidden="true" tabindex="-1"></a>The full model achieves an AUC of <span class="in">`r round(auc(roc_obj), 3)`</span>, compared to <span class="in">`r round(auc(roc_base), 3)`</span> for the base demographic model, confirming that socioeconomic and behavioural predictors add meaningful discrimination beyond age, sex, and race/ethnicity alone. The calibration plot shows predicted probabilities are well-aligned with observed rates across the risk distribution. The Hosmer-Lemeshow p-value is significant, as expected at this sample size, and does not indicate poor fit.</span>
+<span id="cb19-599"><a href="#cb19-599" aria-hidden="true" tabindex="-1"></a>The full model achieves an AUC of <span class="in">`r round(auc(roc_obj), 3)`</span>, compared to <span class="in">`r round(auc(roc_base), 3)`</span> for the base demographic model, confirming that socioeconomic and behavioural predictors add meaningful discrimination beyond age, sex, and race/ethnicity alone. The calibration plot shows predicted probabilities are well aligned with observed rates across the risk distribution. The Hosmer-Lemeshow p-value is significant, as expected at this sample size, and does not indicate poor fit.</span>
 <span id="cb19-600"><a href="#cb19-600" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-601"><a href="#cb19-601" aria-hidden="true" tabindex="-1"></a><span class="fu">### Limitations</span></span>
 <span id="cb19-602"><a href="#cb19-602" aria-hidden="true" tabindex="-1"></a></span>
@@ -4096,9 +4096,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-604"><a href="#cb19-604" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-605"><a href="#cb19-605" aria-hidden="true" tabindex="-1"></a>**Unweighted analysis.** BRFSS uses a complex survey design with stratification, clustering, and post-stratification weights to produce nationally representative estimates. This analysis uses unweighted logistic regression, which produces valid associations within the sample but does not account for the survey design. Population-level prevalence estimates and fully representative ORs would require <span class="in">`svyglm()`</span> from the <span class="in">`survey`</span> package with the provided <span class="in">`psu`</span>, <span class="in">`strata`</span>, and <span class="in">`llcp_weight`</span> variables.</span>
 <span id="cb19-606"><a href="#cb19-606" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-607"><a href="#cb19-607" aria-hidden="true" tabindex="-1"></a>**Self-reported outcome.** Diabetes status is based on self-report of a prior diagnosis. Undiagnosed diabetes, estimated to affect roughly 1 in 4 people with the condition, is not captured, which likely biases associations involving healthcare access toward the null.</span>
+<span id="cb19-607"><a href="#cb19-607" aria-hidden="true" tabindex="-1"></a>**Self-reported outcome.** Diabetes status is based on self-report of a prior diagnosis. Undiagnosed diabetes, estimated to affect roughly 1 in 4 people with the condition, is not captured, which likely biases associations involving healthcare access towards the null.</span>
 <span id="cb19-608"><a href="#cb19-608" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-609"><a href="#cb19-609" aria-hidden="true" tabindex="-1"></a>**Complete-case analysis.** Respondents with missing predictor values were excluded (36.5%, n = 165,437), driven primarily by income-group non-response. If lower-income respondents are more likely to skip the question, the income gradient may be attenuated; the opposite pattern would inflate it. The missingness mechanism cannot be verified from these data.</span>
+<span id="cb19-609"><a href="#cb19-609" aria-hidden="true" tabindex="-1"></a>**Complete-case analysis.** Respondents with missing predictor values were excluded (36.5%, n = 165,437), driven primarily by income-group nonresponse. If lower-income respondents are more likely to skip the question, the income gradient may be attenuated; the opposite pattern would inflate it. The missingness mechanism cannot be verified from these data.</span>
 <span id="cb19-610"><a href="#cb19-610" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-611"><a href="#cb19-611" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb19-612"><a href="#cb19-612" aria-hidden="true" tabindex="-1"></a></span>

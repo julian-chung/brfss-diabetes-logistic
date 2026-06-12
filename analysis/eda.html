@@ -334,7 +334,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#predictor-distributions" id="toc-predictor-distributions" class="nav-link" data-scroll-target="#predictor-distributions"><span class="header-section-number">4.1</span> Predictor distributions</a></li>
   <li><a href="#outcome-prevalence" id="toc-outcome-prevalence" class="nav-link" data-scroll-target="#outcome-prevalence"><span class="header-section-number">4.2</span> Outcome prevalence</a></li>
-  <li><a href="#table-1-sample-characteristics-by-diabetes-status" id="toc-table-1-sample-characteristics-by-diabetes-status" class="nav-link" data-scroll-target="#table-1-sample-characteristics-by-diabetes-status"><span class="header-section-number">4.3</span> Table 1 — sample characteristics by diabetes status</a></li>
+  <li><a href="#table-1-sample-characteristics-by-diabetes-status" id="toc-table-1-sample-characteristics-by-diabetes-status" class="nav-link" data-scroll-target="#table-1-sample-characteristics-by-diabetes-status"><span class="header-section-number">4.3</span> Table 1: Sample characteristics by diabetes status</a></li>
   </ul></li>
   <li><a href="#outcome-prevalence-by-subgroup" id="toc-outcome-prevalence-by-subgroup" class="nav-link" data-scroll-target="#outcome-prevalence-by-subgroup"><span class="header-section-number">5</span> Outcome Prevalence by Subgroup</a></li>
   <li><a href="#unadjusted-associations" id="toc-unadjusted-associations" class="nav-link" data-scroll-target="#unadjusted-associations"><span class="header-section-number">6</span> Unadjusted Associations</a></li>
@@ -388,10 +388,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="data-pipeline" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="data-pipeline"><span class="header-section-number">2</span> Data Pipeline</h2>
-<p>The raw BRFSS 2024 data were downloaded as a fixed-width file and converted to Parquet using <code>R/download_raw.R</code>. The mart was built using DuckDB with four SQL scripts run in sequence: a view over the raw Parquet file, a recode and inclusion-criteria step to produce the analytical dataset, validation checks, and export to Parquet for use in R.</p>
+<p>The raw BRFSS 2024 data were downloaded as a SAS XPT file and converted to Parquet using <code>R/xpt_to_parquet.R</code>. The mart was built using DuckDB with four SQL scripts run in sequence: a view over the raw Parquet file, a recode and inclusion-criteria step to produce the analytical dataset, validation checks, and export to Parquet for use in R.</p>
 <div class="cell">
 <details class="code-fold">
-<summary>01 — Create view over raw Parquet file</summary>
+<summary>01: Create view over raw Parquet file</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- 01_load_raw.sql</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- Create a view over the raw Parquet file so DuckDB can query it by name.</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">create</span> <span class="kw">or</span> <span class="kw">replace</span> <span class="kw">view</span> brfss_raw <span class="kw">as</span></span>
@@ -402,7 +402,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="cell">
 <details class="code-fold">
-<summary>02 — Recode variables and apply inclusion criteria</summary>
+<summary>02: Recode variables and apply inclusion criteria</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- 02_build_mart.sql</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- Select and recode all variables, then filter to respondents with a</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- non-missing diabetes outcome (DIABETE4 codes 7, 9, and 2 set to NULL).</span></span>
@@ -529,7 +529,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="cell">
 <details class="code-fold">
-<summary>03 — Validation checks</summary>
+<summary>03: Validation checks</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- 03_validation.sql</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- Row counts, outcome distribution, and missingness by predictor.</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="fu">count</span>(<span class="op">*</span>) <span class="kw">from</span> analytical_dataset;</span>
@@ -565,14 +565,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="cell">
 <details class="code-fold">
-<summary>04 — Export to Parquet</summary>
+<summary>04: Export to Parquet</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- 04_export.sql</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">copy</span> (<span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> analytical_dataset)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">to</span> <span class="st">'data/processed/analysis_dataset.parquet'</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>(format parquet);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<p>The Parquet file is the mart for analysis — the raw data file stays untouched, and all downstream R code reads from <code>data/processed/</code>.</p>
+<p>The Parquet file is the mart for analysis: the raw data file stays untouched, and all downstream R code reads from <code>data/processed/</code>.</p>
 <hr>
 </section>
 <section id="data-import" class="level2" data-number="3">
@@ -598,7 +598,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="4" class="anchored" data-anchor-id="sample-characteristics"><span class="header-section-number">4</span> Sample Characteristics</h2>
 <section id="predictor-distributions" class="level3" data-number="4.1">
 <h3 data-number="4.1" class="anchored" data-anchor-id="predictor-distributions"><span class="header-section-number">4.1</span> Predictor distributions</h3>
-<p>Understanding the sample composition across predictors helps identify sparse categories, where estimates will be less stable and require cautious interpretation.</p>
+<p>Understanding the sample composition across predictors helps identify sparse categories, where estimates will be less stable.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -675,7 +675,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The sample skews older and more educated, with adults aged 65 and over accounting for 48% of respondents and college graduates forming the largest education category (42.1%). The BMI distribution is predominantly above the normal-weight threshold, with 69% of respondents falling in the overweight or obese categories, indicating that BMI-related contrasts are well represented in the data. Race and ethnicity show the most analytically consequential imbalance: White respondents account for 73.5% of the sample, while several groups — Pacific Islander, American Indian or Alaska Native, Other/Multiracial, Hispanic, and Asian — each fall below 3%. Estimates for these smaller groups will therefore be less precise and require cautious interpretation.</p>
+<p>The sample skews older and more educated: adults aged 65 and over make up 48% of respondents, and college graduates are the largest education category (42.1%). Most respondents (69%) are overweight or obese, so BMI contrasts are well represented in the data. The most consequential imbalance is in race and ethnicity. White respondents account for 73.5% of the sample, while several groups (Pacific Islander, American Indian or Alaska Native, Other/Multiracial, Hispanic, and Asian) each fall below 3%, so their estimates will be less precise and need cautious interpretation.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -718,7 +718,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>All three binary predictors are strongly imbalanced. Heavy drinking is rare (5.9%), so estimates of its association with diabetes rest on a small exposed group. Having a personal doctor (87.6%) and being physically active (76.7%) remain one-sided, limiting contrast and reducing precision in their effect estimates.</p>
+<p>All three binary predictors are strongly imbalanced. Heavy drinking is rare (5.9%), so estimates of its association with diabetes rest on a small exposed group. Having a personal doctor (87.6%) and being physically active (76.7%) are also one-sided, which limits contrast and precision.</p>
 </section>
 <section id="outcome-prevalence" class="level3" data-number="4.2">
 <h3 data-number="4.2" class="anchored" data-anchor-id="outcome-prevalence"><span class="header-section-number">4.2</span> Outcome prevalence</h3>
@@ -742,10 +742,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>14.5% of respondents (65,809 of 453,241) reported a diabetes diagnosis. The outcome is moderately imbalanced rather than rare, providing sufficient cases for stable estimation while still requiring attention to this imbalance in interpretation.</p>
+<p>14.5% of respondents (65,809 of 453,241) reported a diabetes diagnosis. The outcome is moderately imbalanced rather than rare: there are enough cases for stable estimation, but the imbalance matters when interpreting results.</p>
 </section>
 <section id="table-1-sample-characteristics-by-diabetes-status" class="level3" data-number="4.3">
-<h3 data-number="4.3" class="anchored" data-anchor-id="table-1-sample-characteristics-by-diabetes-status"><span class="header-section-number">4.3</span> Table 1 — sample characteristics by diabetes status</h3>
+<h3 data-number="4.3" class="anchored" data-anchor-id="table-1-sample-characteristics-by-diabetes-status"><span class="header-section-number">4.3</span> Table 1: Sample characteristics by diabetes status</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -795,23 +795,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 1.** Sample characteristics by diabetes status"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="ujsrncyapq" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#ujsrncyapq table {
+<div id="pfticcthpk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#pfticcthpk table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#ujsrncyapq thead, #ujsrncyapq tbody, #ujsrncyapq tfoot, #ujsrncyapq tr, #ujsrncyapq td, #ujsrncyapq th {
+#pfticcthpk thead, #pfticcthpk tbody, #pfticcthpk tfoot, #pfticcthpk tr, #pfticcthpk td, #pfticcthpk th {
   border-style: none;
 }
 
-#ujsrncyapq p {
+#pfticcthpk p {
   margin: 0;
   padding: 0;
 }
 
-#ujsrncyapq .gt_table {
+#pfticcthpk .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -837,12 +837,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-left-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_caption {
+#pfticcthpk .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#ujsrncyapq .gt_title {
+#pfticcthpk .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -854,7 +854,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-bottom-width: 0;
 }
 
-#ujsrncyapq .gt_subtitle {
+#pfticcthpk .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -866,7 +866,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-top-width: 0;
 }
 
-#ujsrncyapq .gt_heading {
+#pfticcthpk .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -878,13 +878,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-right-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_bottom_border {
+#pfticcthpk .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_col_headings {
+#pfticcthpk .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -899,7 +899,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-right-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_col_heading {
+#pfticcthpk .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -919,7 +919,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   overflow-x: hidden;
 }
 
-#ujsrncyapq .gt_column_spanner_outer {
+#pfticcthpk .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -931,15 +931,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   padding-right: 4px;
 }
 
-#ujsrncyapq .gt_column_spanner_outer:first-child {
+#pfticcthpk .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ujsrncyapq .gt_column_spanner_outer:last-child {
+#pfticcthpk .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ujsrncyapq .gt_column_spanner {
+#pfticcthpk .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -951,11 +951,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   width: 100%;
 }
 
-#ujsrncyapq .gt_spanner_row {
+#pfticcthpk .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#ujsrncyapq .gt_group_heading {
+#pfticcthpk .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -981,7 +981,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   text-align: left;
 }
 
-#ujsrncyapq .gt_empty_group_heading {
+#pfticcthpk .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -996,15 +996,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   vertical-align: middle;
 }
 
-#ujsrncyapq .gt_from_md > :first-child {
+#pfticcthpk .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ujsrncyapq .gt_from_md > :last-child {
+#pfticcthpk .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ujsrncyapq .gt_row {
+#pfticcthpk .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1023,7 +1023,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   overflow-x: hidden;
 }
 
-#ujsrncyapq .gt_stub {
+#pfticcthpk .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1036,7 +1036,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   padding-right: 5px;
 }
 
-#ujsrncyapq .gt_stub_row_group {
+#pfticcthpk .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1050,15 +1050,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   vertical-align: top;
 }
 
-#ujsrncyapq .gt_row_group_first td {
+#pfticcthpk .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#ujsrncyapq .gt_row_group_first th {
+#pfticcthpk .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#ujsrncyapq .gt_summary_row {
+#pfticcthpk .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1068,16 +1068,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   padding-right: 5px;
 }
 
-#ujsrncyapq .gt_first_summary_row {
+#pfticcthpk .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_first_summary_row.thick {
+#pfticcthpk .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#ujsrncyapq .gt_last_summary_row {
+#pfticcthpk .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1087,7 +1087,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-bottom-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_grand_summary_row {
+#pfticcthpk .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1097,7 +1097,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   padding-right: 5px;
 }
 
-#ujsrncyapq .gt_first_grand_summary_row {
+#pfticcthpk .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1107,7 +1107,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-top-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_last_grand_summary_row_top {
+#pfticcthpk .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1117,11 +1117,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-bottom-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_striped {
+#pfticcthpk .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ujsrncyapq .gt_table_body {
+#pfticcthpk .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1130,7 +1130,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-bottom-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_footnotes {
+#pfticcthpk .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1144,7 +1144,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-right-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_footnote {
+#pfticcthpk .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1153,7 +1153,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   padding-right: 5px;
 }
 
-#ujsrncyapq .gt_sourcenotes {
+#pfticcthpk .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1167,7 +1167,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-right-color: #D3D3D3;
 }
 
-#ujsrncyapq .gt_sourcenote {
+#pfticcthpk .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1175,72 +1175,72 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   padding-right: 5px;
 }
 
-#ujsrncyapq .gt_left {
+#pfticcthpk .gt_left {
   text-align: left;
 }
 
-#ujsrncyapq .gt_center {
+#pfticcthpk .gt_center {
   text-align: center;
 }
 
-#ujsrncyapq .gt_right {
+#pfticcthpk .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ujsrncyapq .gt_font_normal {
+#pfticcthpk .gt_font_normal {
   font-weight: normal;
 }
 
-#ujsrncyapq .gt_font_bold {
+#pfticcthpk .gt_font_bold {
   font-weight: bold;
 }
 
-#ujsrncyapq .gt_font_italic {
+#pfticcthpk .gt_font_italic {
   font-style: italic;
 }
 
-#ujsrncyapq .gt_super {
+#pfticcthpk .gt_super {
   font-size: 65%;
 }
 
-#ujsrncyapq .gt_footnote_marks {
+#pfticcthpk .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#ujsrncyapq .gt_asterisk {
+#pfticcthpk .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#ujsrncyapq .gt_indent_1 {
+#pfticcthpk .gt_indent_1 {
   text-indent: 5px;
 }
 
-#ujsrncyapq .gt_indent_2 {
+#pfticcthpk .gt_indent_2 {
   text-indent: 10px;
 }
 
-#ujsrncyapq .gt_indent_3 {
+#pfticcthpk .gt_indent_3 {
   text-indent: 15px;
 }
 
-#ujsrncyapq .gt_indent_4 {
+#pfticcthpk .gt_indent_4 {
   text-indent: 20px;
 }
 
-#ujsrncyapq .gt_indent_5 {
+#pfticcthpk .gt_indent_5 {
   text-indent: 25px;
 }
 
-#ujsrncyapq .katex-display {
+#pfticcthpk .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#ujsrncyapq div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#pfticcthpk div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1678,7 +1678,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 </div>
 </div>
 </div>
-<p>Age and BMI show the strongest gradients: the diabetes group skews substantially older, and obesity is markedly more common (52% vs 30%). Socioeconomic differences follow a similar pattern, with lower income and lower educational attainment more prevalent in the diabetes group. Behavioural and health indicators add further contrasts — lower physical activity, a higher proportion of former smokers, and more frequent poor mental health days — though these likely reflect a mix of upstream risk factors and downstream consequences of disease rather than independent effects. These overlapping relationships will be estimated more precisely in the adjusted model.</p>
+<p>Age and BMI show the strongest gradients: the diabetes group skews substantially older, and obesity is markedly more common (52% vs 30%). Socioeconomic differences follow a similar pattern, with lower income and lower education more prevalent in the diabetes group. Behavioural and health indicators add further contrasts (lower physical activity, more former smokers, and more frequent poor mental health days), though these likely reflect a mix of upstream risk factors and downstream consequences of disease. These overlapping relationships are revisited in the adjusted model.</p>
 <hr>
 </section>
 </section>
@@ -1754,13 +1754,13 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 </div>
 </div>
 </div>
-<p>The age gradient climbs from 1.6% in those aged 18–34 to 22.2% in those aged 75+, while the BMI gradient is similarly pronounced, with the obese group at 22.7% compared with 7.6% in the normal-weight group. Socioeconomic gradients are also evident, with higher prevalence in lower income and lower education categories.</p>
-<p>Behavioural and health indicators show additional differences, including higher prevalence among those reporting 14+ poor mental health days and among former smokers, although these patterns may reflect confounding or changes following diagnosis rather than independent effects. Variation across race and ethnicity is substantial but warrants cautious interpretation due to small sample sizes in several groups.</p>
+<p>Prevalence climbs from 1.6% at ages 18-34 to 22.2% at 75+, and the BMI gradient is nearly as steep: 22.7% in the obese group versus 7.6% at normal weight. Prevalence also rises as income and education fall.</p>
+<p>Behavioural and health indicators show further differences, including higher prevalence among former smokers and among those reporting 14+ poor mental health days, though these may reflect confounding or changes following diagnosis rather than independent effects. Variation across race and ethnicity is substantial but rests on small samples in several groups.</p>
 <hr>
 </section>
 <section id="unadjusted-associations" class="level2" data-number="6">
 <h2 data-number="6" class="anchored" data-anchor-id="unadjusted-associations"><span class="header-section-number">6</span> Unadjusted Associations</h2>
-<p>Each predictor is regressed against the diabetes outcome individually, producing a crude odds ratio (OR) that quantifies the association without controlling for any other variable.</p>
+<p>Diabetes status is regressed on each predictor individually, producing a crude odds ratio (OR) for the association without adjustment for any other variable.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1819,23 +1819,23 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 2.** Unadjusted odds ratios for diabetes by predictor"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="kxkyqhcawd" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#kxkyqhcawd table {
+<div id="wqwpmhrfxu" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#wqwpmhrfxu table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#kxkyqhcawd thead, #kxkyqhcawd tbody, #kxkyqhcawd tfoot, #kxkyqhcawd tr, #kxkyqhcawd td, #kxkyqhcawd th {
+#wqwpmhrfxu thead, #wqwpmhrfxu tbody, #wqwpmhrfxu tfoot, #wqwpmhrfxu tr, #wqwpmhrfxu td, #wqwpmhrfxu th {
   border-style: none;
 }
 
-#kxkyqhcawd p {
+#wqwpmhrfxu p {
   margin: 0;
   padding: 0;
 }
 
-#kxkyqhcawd .gt_table {
+#wqwpmhrfxu .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1861,12 +1861,12 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-left-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_caption {
+#wqwpmhrfxu .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#kxkyqhcawd .gt_title {
+#wqwpmhrfxu .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1878,7 +1878,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-bottom-width: 0;
 }
 
-#kxkyqhcawd .gt_subtitle {
+#wqwpmhrfxu .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1890,7 +1890,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-top-width: 0;
 }
 
-#kxkyqhcawd .gt_heading {
+#wqwpmhrfxu .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1902,13 +1902,13 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-right-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_bottom_border {
+#wqwpmhrfxu .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_col_headings {
+#wqwpmhrfxu .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1923,7 +1923,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-right-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_col_heading {
+#wqwpmhrfxu .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1943,7 +1943,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   overflow-x: hidden;
 }
 
-#kxkyqhcawd .gt_column_spanner_outer {
+#wqwpmhrfxu .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1955,15 +1955,15 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   padding-right: 4px;
 }
 
-#kxkyqhcawd .gt_column_spanner_outer:first-child {
+#wqwpmhrfxu .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#kxkyqhcawd .gt_column_spanner_outer:last-child {
+#wqwpmhrfxu .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#kxkyqhcawd .gt_column_spanner {
+#wqwpmhrfxu .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1975,11 +1975,11 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   width: 100%;
 }
 
-#kxkyqhcawd .gt_spanner_row {
+#wqwpmhrfxu .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#kxkyqhcawd .gt_group_heading {
+#wqwpmhrfxu .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2005,7 +2005,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   text-align: left;
 }
 
-#kxkyqhcawd .gt_empty_group_heading {
+#wqwpmhrfxu .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2020,15 +2020,15 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   vertical-align: middle;
 }
 
-#kxkyqhcawd .gt_from_md > :first-child {
+#wqwpmhrfxu .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#kxkyqhcawd .gt_from_md > :last-child {
+#wqwpmhrfxu .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#kxkyqhcawd .gt_row {
+#wqwpmhrfxu .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2047,7 +2047,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   overflow-x: hidden;
 }
 
-#kxkyqhcawd .gt_stub {
+#wqwpmhrfxu .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2060,7 +2060,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   padding-right: 5px;
 }
 
-#kxkyqhcawd .gt_stub_row_group {
+#wqwpmhrfxu .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2074,15 +2074,15 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   vertical-align: top;
 }
 
-#kxkyqhcawd .gt_row_group_first td {
+#wqwpmhrfxu .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#kxkyqhcawd .gt_row_group_first th {
+#wqwpmhrfxu .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#kxkyqhcawd .gt_summary_row {
+#wqwpmhrfxu .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2092,16 +2092,16 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   padding-right: 5px;
 }
 
-#kxkyqhcawd .gt_first_summary_row {
+#wqwpmhrfxu .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_first_summary_row.thick {
+#wqwpmhrfxu .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#kxkyqhcawd .gt_last_summary_row {
+#wqwpmhrfxu .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2111,7 +2111,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-bottom-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_grand_summary_row {
+#wqwpmhrfxu .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2121,7 +2121,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   padding-right: 5px;
 }
 
-#kxkyqhcawd .gt_first_grand_summary_row {
+#wqwpmhrfxu .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2131,7 +2131,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-top-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_last_grand_summary_row_top {
+#wqwpmhrfxu .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2141,11 +2141,11 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-bottom-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_striped {
+#wqwpmhrfxu .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#kxkyqhcawd .gt_table_body {
+#wqwpmhrfxu .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2154,7 +2154,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-bottom-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_footnotes {
+#wqwpmhrfxu .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2168,7 +2168,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-right-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_footnote {
+#wqwpmhrfxu .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -2177,7 +2177,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   padding-right: 5px;
 }
 
-#kxkyqhcawd .gt_sourcenotes {
+#wqwpmhrfxu .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2191,7 +2191,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   border-right-color: #D3D3D3;
 }
 
-#kxkyqhcawd .gt_sourcenote {
+#wqwpmhrfxu .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -2199,72 +2199,72 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
   padding-right: 5px;
 }
 
-#kxkyqhcawd .gt_left {
+#wqwpmhrfxu .gt_left {
   text-align: left;
 }
 
-#kxkyqhcawd .gt_center {
+#wqwpmhrfxu .gt_center {
   text-align: center;
 }
 
-#kxkyqhcawd .gt_right {
+#wqwpmhrfxu .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#kxkyqhcawd .gt_font_normal {
+#wqwpmhrfxu .gt_font_normal {
   font-weight: normal;
 }
 
-#kxkyqhcawd .gt_font_bold {
+#wqwpmhrfxu .gt_font_bold {
   font-weight: bold;
 }
 
-#kxkyqhcawd .gt_font_italic {
+#wqwpmhrfxu .gt_font_italic {
   font-style: italic;
 }
 
-#kxkyqhcawd .gt_super {
+#wqwpmhrfxu .gt_super {
   font-size: 65%;
 }
 
-#kxkyqhcawd .gt_footnote_marks {
+#wqwpmhrfxu .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#kxkyqhcawd .gt_asterisk {
+#wqwpmhrfxu .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#kxkyqhcawd .gt_indent_1 {
+#wqwpmhrfxu .gt_indent_1 {
   text-indent: 5px;
 }
 
-#kxkyqhcawd .gt_indent_2 {
+#wqwpmhrfxu .gt_indent_2 {
   text-indent: 10px;
 }
 
-#kxkyqhcawd .gt_indent_3 {
+#wqwpmhrfxu .gt_indent_3 {
   text-indent: 15px;
 }
 
-#kxkyqhcawd .gt_indent_4 {
+#wqwpmhrfxu .gt_indent_4 {
   text-indent: 20px;
 }
 
-#kxkyqhcawd .gt_indent_5 {
+#wqwpmhrfxu .gt_indent_5 {
   text-indent: 25px;
 }
 
-#kxkyqhcawd .katex-display {
+#wqwpmhrfxu .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#kxkyqhcawd div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#wqwpmhrfxu div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -2704,8 +2704,8 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 </div>
 </div>
 </div>
-<p>The age odds ratio rises monotonically from 2.29 in the 35–44 group to 17.2 in those aged 75+, while obesity is associated with 3.58 times the odds of the normal-weight group. Socioeconomic gradients are also evident, with progressively higher odds of diabetes in lower income and lower education categories.</p>
-<p>Behavioural and health indicators show additional associations, including lower odds among physically active respondents and higher odds among former smokers, though these patterns likely reflect confounding and behavioural changes following diagnosis rather than independent effects. Several variables display clear signs of reverse causation, particularly heavy drinking (OR 0.42) and having a personal doctor (OR 4.29), where the direction of association is more consistent with disease status influencing behaviour or healthcare contact. These crude estimates provide context, but many relationships are likely to attenuate or change after adjustment.</p>
+<p>The age odds ratio rises steadily from 2.29 in the 35-44 group to 17.2 in those aged 75+, and adults with obesity have 3.58 times the odds of those at normal weight. Odds also rise step by step as income and education fall.</p>
+<p>As in the prevalence plots, the lower odds among physically active respondents and higher odds among former smokers likely reflect confounding and behaviour changes following diagnosis. Heavy drinking (OR 0.42) and having a personal doctor (OR 4.29) show clear signs of reverse causation: the direction of association fits disease status influencing behaviour or healthcare contact. These crude estimates provide context, but many will attenuate or change after adjustment.</p>
 <hr>
 </section>
 <section id="missingness" class="level2" data-number="7">
@@ -2724,13 +2724,13 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 </div>
 </div>
 </div>
-<p>Income group stands out with 25.5% missingness — the only variable where nonresponse is large enough to meaningfully reduce the effective sample under complete-case analysis. Most remaining variables fall below 10%, with heavy drinking (10.2%) and BMI category (9.3%) contributing some additional row loss. Whether income nonresponse is random or related to diabetes risk is unclear, but its scale is important to consider when interpreting results from complete-case models.</p>
+<p>Income group stands out with 25.5% missingness, the only variable where nonresponse is large enough to meaningfully shrink the complete-case sample. Most other variables fall below 10%, with heavy drinking (10.2%) and BMI category (9.3%) adding some row loss. Whether income nonresponse is random or related to diabetes risk is unclear, but its scale matters when interpreting complete-case results.</p>
 <hr>
 </section>
 <section id="summary" class="level2" data-number="8">
 <h2 data-number="8" class="anchored" data-anchor-id="summary"><span class="header-section-number">8</span> Summary</h2>
-<p>Age and BMI are the most consistent signals, with strong, monotonic gradients across the descriptive analyses. Socioeconomic predictors show clear unadjusted associations, while income group stands out with substantial missingness (25.5%), reducing the effective sample under complete-case analysis. Several behavioural variables, particularly heavy drinking and having a personal doctor, show patterns more consistent with reverse causation than independent effects.</p>
-<p>The adjusted model will help separate these overlapping relationships and identify which associations persist after controlling for confounding.</p>
+<p>Age and BMI are the most consistent signals, with strong, monotonic gradients across the descriptive analyses. Socioeconomic predictors show clear unadjusted associations, while income group carries substantial missingness (25.5%) that shrinks the complete-case sample. Several behavioural variables, particularly heavy drinking and having a personal doctor, show patterns more consistent with reverse causation than independent effects.</p>
+<p>The adjusted model will help separate these overlapping relationships and show which associations persist.</p>
 <hr>
 </section>
 <section id="session-info" class="level2" data-number="9">
@@ -3283,11 +3283,11 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Pipeline</span></span>
 <span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>The raw BRFSS 2024 data were downloaded as a fixed-width file and converted to Parquet using <span class="in">`R/download_raw.R`</span>. The mart was built using DuckDB with four SQL scripts run in sequence: a view over the raw Parquet file, a recode and inclusion-criteria step to produce the analytical dataset, validation checks, and export to Parquet for use in R.</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>The raw BRFSS 2024 data were downloaded as a SAS XPT file and converted to Parquet using <span class="in">`R/xpt_to_parquet.R`</span>. The mart was built using DuckDB with four SQL scripts run in sequence: a view over the raw Parquet file, a recode and inclusion-criteria step to produce the analytical dataset, validation checks, and export to Parquet for use in R.</span>
 <span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a><span class="in">```{sql}</span></span>
 <span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a><span class="co">--| label: sql-load-raw</span></span>
-<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "01 — Create view over raw Parquet file"</span></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "01: Create view over raw Parquet file"</span></span>
 <span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a><span class="co">--| eval: false</span></span>
 <span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a><span class="co">-- 01_load_raw.sql</span></span>
@@ -3300,7 +3300,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a><span class="in">```{sql}</span></span>
 <span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a><span class="co">--| label: sql-build-mart</span></span>
-<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "02 — Recode variables and apply inclusion criteria"</span></span>
+<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "02: Recode variables and apply inclusion criteria"</span></span>
 <span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a><span class="co">--| eval: false</span></span>
 <span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a><span class="co">-- 02_build_mart.sql</span></span>
@@ -3429,7 +3429,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-178"><a href="#cb15-178" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-181"><a href="#cb15-181" aria-hidden="true" tabindex="-1"></a><span class="in">```{sql}</span></span>
 <span id="cb15-182"><a href="#cb15-182" aria-hidden="true" tabindex="-1"></a><span class="co">--| label: sql-validation</span></span>
-<span id="cb15-183"><a href="#cb15-183" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "03 — Validation checks"</span></span>
+<span id="cb15-183"><a href="#cb15-183" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "03: Validation checks"</span></span>
 <span id="cb15-184"><a href="#cb15-184" aria-hidden="true" tabindex="-1"></a><span class="co">--| eval: false</span></span>
 <span id="cb15-185"><a href="#cb15-185" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-186"><a href="#cb15-186" aria-hidden="true" tabindex="-1"></a><span class="co">-- 03_validation.sql</span></span>
@@ -3467,7 +3467,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-218"><a href="#cb15-218" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-221"><a href="#cb15-221" aria-hidden="true" tabindex="-1"></a><span class="in">```{sql}</span></span>
 <span id="cb15-222"><a href="#cb15-222" aria-hidden="true" tabindex="-1"></a><span class="co">--| label: sql-export</span></span>
-<span id="cb15-223"><a href="#cb15-223" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "04 — Export to Parquet"</span></span>
+<span id="cb15-223"><a href="#cb15-223" aria-hidden="true" tabindex="-1"></a><span class="co">--| code-summary: "04: Export to Parquet"</span></span>
 <span id="cb15-224"><a href="#cb15-224" aria-hidden="true" tabindex="-1"></a><span class="co">--| eval: false</span></span>
 <span id="cb15-225"><a href="#cb15-225" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-226"><a href="#cb15-226" aria-hidden="true" tabindex="-1"></a><span class="co">-- 04_export.sql</span></span>
@@ -3476,7 +3476,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-229"><a href="#cb15-229" aria-hidden="true" tabindex="-1"></a>(<span class="fu">format</span> parquet);</span>
 <span id="cb15-230"><a href="#cb15-230" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-231"><a href="#cb15-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-232"><a href="#cb15-232" aria-hidden="true" tabindex="-1"></a>The Parquet file is the mart for analysis — the raw data file stays untouched, and all downstream R code reads from <span class="in">`data/processed/`</span>.</span>
+<span id="cb15-232"><a href="#cb15-232" aria-hidden="true" tabindex="-1"></a>The Parquet file is the mart for analysis: the raw data file stays untouched, and all downstream R code reads from <span class="in">`data/processed/`</span>.</span>
 <span id="cb15-233"><a href="#cb15-233" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-234"><a href="#cb15-234" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-235"><a href="#cb15-235" aria-hidden="true" tabindex="-1"></a></span>
@@ -3499,7 +3499,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-254"><a href="#cb15-254" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-255"><a href="#cb15-255" aria-hidden="true" tabindex="-1"></a><span class="fu">### Predictor distributions</span></span>
 <span id="cb15-256"><a href="#cb15-256" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-257"><a href="#cb15-257" aria-hidden="true" tabindex="-1"></a>Understanding the sample composition across predictors helps identify sparse categories, where estimates will be less stable and require cautious interpretation.</span>
+<span id="cb15-257"><a href="#cb15-257" aria-hidden="true" tabindex="-1"></a>Understanding the sample composition across predictors helps identify sparse categories, where estimates will be less stable.</span>
 <span id="cb15-258"><a href="#cb15-258" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-261"><a href="#cb15-261" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb15-262"><a href="#cb15-262" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: predictor-distributions</span></span>
@@ -3571,7 +3571,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-328"><a href="#cb15-328" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb15-329"><a href="#cb15-329" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-330"><a href="#cb15-330" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-331"><a href="#cb15-331" aria-hidden="true" tabindex="-1"></a>The sample skews older and more educated, with adults aged 65 and over accounting for 48% of respondents and college graduates forming the largest education category (42.1%). The BMI distribution is predominantly above the normal-weight threshold, with 69% of respondents falling in the overweight or obese categories, indicating that BMI-related contrasts are well represented in the data. Race and ethnicity show the most analytically consequential imbalance: White respondents account for 73.5% of the sample, while several groups — Pacific Islander, American Indian or Alaska Native, Other/Multiracial, Hispanic, and Asian — each fall below 3%. Estimates for these smaller groups will therefore be less precise and require cautious interpretation.</span>
+<span id="cb15-331"><a href="#cb15-331" aria-hidden="true" tabindex="-1"></a>The sample skews older and more educated: adults aged 65 and over make up 48% of respondents, and college graduates are the largest education category (42.1%). Most respondents (69%) are overweight or obese, so BMI contrasts are well represented in the data. The most consequential imbalance is in race and ethnicity. White respondents account for 73.5% of the sample, while several groups (Pacific Islander, American Indian or Alaska Native, Other/Multiracial, Hispanic, and Asian) each fall below 3%, so their estimates will be less precise and need cautious interpretation.</span>
 <span id="cb15-332"><a href="#cb15-332" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-335"><a href="#cb15-335" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb15-336"><a href="#cb15-336" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: binary-predictors</span></span>
@@ -3609,7 +3609,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-368"><a href="#cb15-368" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb15-369"><a href="#cb15-369" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-370"><a href="#cb15-370" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-371"><a href="#cb15-371" aria-hidden="true" tabindex="-1"></a>All three binary predictors are strongly imbalanced. Heavy drinking is rare (5.9%), so estimates of its association with diabetes rest on a small exposed group. Having a personal doctor (87.6%) and being physically active (76.7%) remain one-sided, limiting contrast and reducing precision in their effect estimates.</span>
+<span id="cb15-371"><a href="#cb15-371" aria-hidden="true" tabindex="-1"></a>All three binary predictors are strongly imbalanced. Heavy drinking is rare (5.9%), so estimates of its association with diabetes rest on a small exposed group. Having a personal doctor (87.6%) and being physically active (76.7%) are also one-sided, which limits contrast and precision.</span>
 <span id="cb15-372"><a href="#cb15-372" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-373"><a href="#cb15-373" aria-hidden="true" tabindex="-1"></a><span class="fu">### Outcome prevalence</span></span>
 <span id="cb15-374"><a href="#cb15-374" aria-hidden="true" tabindex="-1"></a></span>
@@ -3627,9 +3627,9 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-388"><a href="#cb15-388" aria-hidden="true" tabindex="-1"></a>prev</span>
 <span id="cb15-389"><a href="#cb15-389" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-390"><a href="#cb15-390" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-391"><a href="#cb15-391" aria-hidden="true" tabindex="-1"></a><span class="in">`r prev$pct[prev$diabetes == 1]`</span> of respondents (<span class="in">`r format(prev$n[prev$diabetes == 1], big.mark = ",")`</span> of <span class="in">`r format(sum(prev$n), big.mark = ",")`</span>) reported a diabetes diagnosis. The outcome is moderately imbalanced rather than rare, providing sufficient cases for stable estimation while still requiring attention to this imbalance in interpretation.</span>
+<span id="cb15-391"><a href="#cb15-391" aria-hidden="true" tabindex="-1"></a><span class="in">`r prev$pct[prev$diabetes == 1]`</span> of respondents (<span class="in">`r format(prev$n[prev$diabetes == 1], big.mark = ",")`</span> of <span class="in">`r format(sum(prev$n), big.mark = ",")`</span>) reported a diabetes diagnosis. The outcome is moderately imbalanced rather than rare: there are enough cases for stable estimation, but the imbalance matters when interpreting results.</span>
 <span id="cb15-392"><a href="#cb15-392" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-393"><a href="#cb15-393" aria-hidden="true" tabindex="-1"></a><span class="fu">### Table 1 — sample characteristics by diabetes status</span></span>
+<span id="cb15-393"><a href="#cb15-393" aria-hidden="true" tabindex="-1"></a><span class="fu">### Table 1: Sample characteristics by diabetes status</span></span>
 <span id="cb15-394"><a href="#cb15-394" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-397"><a href="#cb15-397" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb15-398"><a href="#cb15-398" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: table-one</span></span>
@@ -3680,7 +3680,7 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-443"><a href="#cb15-443" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 1.** Sample characteristics by diabetes status"</span>)</span>
 <span id="cb15-444"><a href="#cb15-444" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-445"><a href="#cb15-445" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-446"><a href="#cb15-446" aria-hidden="true" tabindex="-1"></a>Age and BMI show the strongest gradients: the diabetes group skews substantially older, and obesity is markedly more common (52% vs 30%). Socioeconomic differences follow a similar pattern, with lower income and lower educational attainment more prevalent in the diabetes group. Behavioural and health indicators add further contrasts — lower physical activity, a higher proportion of former smokers, and more frequent poor mental health days — though these likely reflect a mix of upstream risk factors and downstream consequences of disease rather than independent effects. These overlapping relationships will be estimated more precisely in the adjusted model.</span>
+<span id="cb15-446"><a href="#cb15-446" aria-hidden="true" tabindex="-1"></a>Age and BMI show the strongest gradients: the diabetes group skews substantially older, and obesity is markedly more common (52% vs 30%). Socioeconomic differences follow a similar pattern, with lower income and lower education more prevalent in the diabetes group. Behavioural and health indicators add further contrasts (lower physical activity, more former smokers, and more frequent poor mental health days), though these likely reflect a mix of upstream risk factors and downstream consequences of disease. These overlapping relationships are revisited in the adjusted model.</span>
 <span id="cb15-447"><a href="#cb15-447" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-448"><a href="#cb15-448" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-449"><a href="#cb15-449" aria-hidden="true" tabindex="-1"></a></span>
@@ -3750,15 +3750,15 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-515"><a href="#cb15-515" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb15-516"><a href="#cb15-516" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-517"><a href="#cb15-517" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-518"><a href="#cb15-518" aria-hidden="true" tabindex="-1"></a>The age gradient climbs from 1.6% in those aged 18–34 to 22.2% in those aged 75+, while the BMI gradient is similarly pronounced, with the obese group at 22.7% compared with 7.6% in the normal-weight group. Socioeconomic gradients are also evident, with higher prevalence in lower income and lower education categories.</span>
+<span id="cb15-518"><a href="#cb15-518" aria-hidden="true" tabindex="-1"></a>Prevalence climbs from 1.6% at ages 18-34 to 22.2% at 75+, and the BMI gradient is nearly as steep: 22.7% in the obese group versus 7.6% at normal weight. Prevalence also rises as income and education fall.</span>
 <span id="cb15-519"><a href="#cb15-519" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-520"><a href="#cb15-520" aria-hidden="true" tabindex="-1"></a>Behavioural and health indicators show additional differences, including higher prevalence among those reporting 14+ poor mental health days and among former smokers, although these patterns may reflect confounding or changes following diagnosis rather than independent effects. Variation across race and ethnicity is substantial but warrants cautious interpretation due to small sample sizes in several groups.</span>
+<span id="cb15-520"><a href="#cb15-520" aria-hidden="true" tabindex="-1"></a>Behavioural and health indicators show further differences, including higher prevalence among former smokers and among those reporting 14+ poor mental health days, though these may reflect confounding or changes following diagnosis rather than independent effects. Variation across race and ethnicity is substantial but rests on small samples in several groups.</span>
 <span id="cb15-521"><a href="#cb15-521" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-522"><a href="#cb15-522" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-523"><a href="#cb15-523" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-524"><a href="#cb15-524" aria-hidden="true" tabindex="-1"></a><span class="fu">## Unadjusted Associations</span></span>
 <span id="cb15-525"><a href="#cb15-525" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-526"><a href="#cb15-526" aria-hidden="true" tabindex="-1"></a>Each predictor is regressed against the diabetes outcome individually, producing a crude odds ratio (OR) that quantifies the association without controlling for any other variable.</span>
+<span id="cb15-526"><a href="#cb15-526" aria-hidden="true" tabindex="-1"></a>Diabetes status is regressed on each predictor individually, producing a crude odds ratio (OR) for the association without adjustment for any other variable.</span>
 <span id="cb15-527"><a href="#cb15-527" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-530"><a href="#cb15-530" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb15-531"><a href="#cb15-531" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: uvregression</span></span>
@@ -3818,9 +3818,9 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-585"><a href="#cb15-585" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_caption</span>(<span class="st">"**Table 2.** Unadjusted odds ratios for diabetes by predictor"</span>)</span>
 <span id="cb15-586"><a href="#cb15-586" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-587"><a href="#cb15-587" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-588"><a href="#cb15-588" aria-hidden="true" tabindex="-1"></a>The age odds ratio rises monotonically from 2.29 in the 35–44 group to 17.2 in those aged 75+, while obesity is associated with 3.58 times the odds of the normal-weight group. Socioeconomic gradients are also evident, with progressively higher odds of diabetes in lower income and lower education categories.</span>
+<span id="cb15-588"><a href="#cb15-588" aria-hidden="true" tabindex="-1"></a>The age odds ratio rises steadily from 2.29 in the 35-44 group to 17.2 in those aged 75+, and adults with obesity have 3.58 times the odds of those at normal weight. Odds also rise step by step as income and education fall.</span>
 <span id="cb15-589"><a href="#cb15-589" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-590"><a href="#cb15-590" aria-hidden="true" tabindex="-1"></a>Behavioural and health indicators show additional associations, including lower odds among physically active respondents and higher odds among former smokers, though these patterns likely reflect confounding and behavioural changes following diagnosis rather than independent effects. Several variables display clear signs of reverse causation, particularly heavy drinking (OR 0.42) and having a personal doctor (OR 4.29), where the direction of association is more consistent with disease status influencing behaviour or healthcare contact. These crude estimates provide context, but many relationships are likely to attenuate or change after adjustment.</span>
+<span id="cb15-590"><a href="#cb15-590" aria-hidden="true" tabindex="-1"></a>As in the prevalence plots, the lower odds among physically active respondents and higher odds among former smokers likely reflect confounding and behaviour changes following diagnosis. Heavy drinking (OR 0.42) and having a personal doctor (OR 4.29) show clear signs of reverse causation: the direction of association fits disease status influencing behaviour or healthcare contact. These crude estimates provide context, but many will attenuate or change after adjustment.</span>
 <span id="cb15-591"><a href="#cb15-591" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-592"><a href="#cb15-592" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-593"><a href="#cb15-593" aria-hidden="true" tabindex="-1"></a></span>
@@ -3834,15 +3834,15 @@ N = 65,809<span class="gt_footnote_marks" style="white-space:nowrap;font-style:i
 <span id="cb15-603"><a href="#cb15-603" aria-hidden="true" tabindex="-1"></a><span class="fu">miss_summary</span>(df)</span>
 <span id="cb15-604"><a href="#cb15-604" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-605"><a href="#cb15-605" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-606"><a href="#cb15-606" aria-hidden="true" tabindex="-1"></a>Income group stands out with 25.5% missingness — the only variable where nonresponse is large enough to meaningfully reduce the effective sample under complete-case analysis. Most remaining variables fall below 10%, with heavy drinking (10.2%) and BMI category (9.3%) contributing some additional row loss. Whether income nonresponse is random or related to diabetes risk is unclear, but its scale is important to consider when interpreting results from complete-case models.</span>
+<span id="cb15-606"><a href="#cb15-606" aria-hidden="true" tabindex="-1"></a>Income group stands out with 25.5% missingness, the only variable where nonresponse is large enough to meaningfully shrink the complete-case sample. Most other variables fall below 10%, with heavy drinking (10.2%) and BMI category (9.3%) adding some row loss. Whether income nonresponse is random or related to diabetes risk is unclear, but its scale matters when interpreting complete-case results.</span>
 <span id="cb15-607"><a href="#cb15-607" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-608"><a href="#cb15-608" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-609"><a href="#cb15-609" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-610"><a href="#cb15-610" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
 <span id="cb15-611"><a href="#cb15-611" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-612"><a href="#cb15-612" aria-hidden="true" tabindex="-1"></a>Age and BMI are the most consistent signals, with strong, monotonic gradients across the descriptive analyses. Socioeconomic predictors show clear unadjusted associations, while income group stands out with substantial missingness (25.5%), reducing the effective sample under complete-case analysis. Several behavioural variables, particularly heavy drinking and having a personal doctor, show patterns more consistent with reverse causation than independent effects.</span>
+<span id="cb15-612"><a href="#cb15-612" aria-hidden="true" tabindex="-1"></a>Age and BMI are the most consistent signals, with strong, monotonic gradients across the descriptive analyses. Socioeconomic predictors show clear unadjusted associations, while income group carries substantial missingness (25.5%) that shrinks the complete-case sample. Several behavioural variables, particularly heavy drinking and having a personal doctor, show patterns more consistent with reverse causation than independent effects.</span>
 <span id="cb15-613"><a href="#cb15-613" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-614"><a href="#cb15-614" aria-hidden="true" tabindex="-1"></a>The adjusted model will help separate these overlapping relationships and identify which associations persist after controlling for confounding.</span>
+<span id="cb15-614"><a href="#cb15-614" aria-hidden="true" tabindex="-1"></a>The adjusted model will help separate these overlapping relationships and show which associations persist.</span>
 <span id="cb15-615"><a href="#cb15-615" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-616"><a href="#cb15-616" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-617"><a href="#cb15-617" aria-hidden="true" tabindex="-1"></a></span>
