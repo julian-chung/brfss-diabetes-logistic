@@ -3,7 +3,7 @@ title: "{{< var study_title >}}"
 subtitle: "Overview: Key Findings"
 ---
 
-This project analyses data from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a large U.S. health survey of over 450,000 adults, to understand how demographic, socioeconomic, and behavioural factors are associated with diabetes risk. The analysis focuses on identifying which factors show the strongest relationships with a diabetes diagnosis after accounting for differences across the population. Full methods and model diagnostics are in the [Logistic Regression notebook](logistic-regression.qmd).
+This analysis uses data from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a U.S. health survey of over 450,000 adults, to identify which demographic, socioeconomic, and behavioural factors are most strongly linked to a diabetes diagnosis after adjusting for the others. This page summarises the key findings; full methods and model diagnostics are in the [Logistic Regression notebook](logistic-regression.qmd).
 
 ```{r}
 #| label: setup
@@ -30,19 +30,19 @@ auc_val <- as.numeric(pROC::auc(roc_obj))
 
 ## Key Findings
 
-**Age is the strongest predictor of diabetes risk.** Adults aged 75+ have `r round(exp(coef(mod)["age_group75+"]), 0)` times the odds of a diabetes diagnosis compared to those aged 18–34, after accounting for other factors.
+**Age is the strongest predictor of diabetes risk.** Adults aged 75+ have `r round(exp(coef(mod)["age_group75+"]), 0)` times the odds of a diabetes diagnosis compared to those aged 18-34, after adjusting for other factors.
 
 **Obesity and age compound risk.** Adults with an obese BMI have `r round(exp(coef(mod)["bmi_categoryObese"]), 1)` times the odds of a diagnosis compared to those at a normal weight, and this gap widens with age.
 
-**Socioeconomic and racial disparities persist after adjustment.** Lower income is associated with higher risk, and several racial and ethnic groups show elevated odds even after accounting for income, education, and lifestyle factors.
+**Socioeconomic and racial disparities persist after adjustment.** Lower income is linked to higher risk, and several racial and ethnic groups show higher odds even after adjusting for income, education, and lifestyle.
 
-**The model shows consistent but not perfect discrimination.** It correctly ranks a person with diabetes above a person without in `r round(auc_val * 100, 0)`% of cases, indicating reliable but moderate separation based on demographic and lifestyle factors.
+**The model discriminates reliably but not perfectly.** It ranks a person with diabetes above a person without in `r round(auc_val * 100, 0)`% of cases.
 
 ---
 
 ## How diabetes risk changes across the population
 
-These figures summarise the main patterns in the data. They focus on how diabetes risk changes across age, body weight, and socioeconomic status, and highlight a small number of key findings from the full model.
+The figures below show how diabetes risk changes with age, body weight, and income, and highlight a few key results from the full model.
 
 ### Diabetes risk rises sharply with age and BMI
 
@@ -102,9 +102,9 @@ ggplot(pred_grid, aes(x = age_group, y = prob,
   )
 ```
 
-Diabetes risk increases with both age and body weight, and the two effects compound rather than substitute. In this model, predicted risk for adults with obesity rises from `r round(pred_grid[pred_grid$age_group == "18-34" & pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`% at age 18-34 to `r round(pred_grid[pred_grid$age_group == "75+" & pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`% at age 75+, compared to `r round(pred_grid[pred_grid$age_group == "75+" & pred_grid$bmi_category == "Normal", "prob"] * 100, 1)`% for adults at a normal weight in the same age group.
+Diabetes risk rises with both age and body weight, and the two effects build on each other. In this model, predicted risk for adults with obesity rises from `r round(pred_grid[pred_grid$age_group == "18-34" & pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`% at age 18-34 to `r round(pred_grid[pred_grid$age_group == "75+" & pred_grid$bmi_category == "Obese", "prob"] * 100, 1)`% at age 75+, compared to `r round(pred_grid[pred_grid$age_group == "75+" & pred_grid$bmi_category == "Normal", "prob"] * 100, 1)`% for normal-weight adults of the same age.
 
-These estimates isolate the effect of age and BMI by holding other factors constant. In practice, risk will be higher for individuals with additional risk factors such as lower income, physical inactivity, or existing health conditions.
+These estimates hold other factors constant to isolate age and BMI. In practice, risk is higher for people with additional risk factors such as lower income, physical inactivity, or existing health conditions.
 
 ```{r}
 #| label: or-data
@@ -155,7 +155,7 @@ ggplot(income_df, aes(x = estimate, y = label)) +
   )
 ```
 
-Diabetes risk increases steadily as income falls, not just at the extremes. Adults with a household income below $15,000 have `r round(or_df$estimate[or_df$term == "income_group<$15k"], 2)` times the odds of a diabetes diagnosis compared to those earning over $100,000, and this gradient persists after accounting for age, body weight, race, and lifestyle factors.
+Diabetes risk increases steadily as income falls, not just at the extremes. Adults with a household income below $15,000 have `r round(or_df$estimate[or_df$term == "income_group<$15k"], 2)` times the odds of a diabetes diagnosis compared to those earning over $100,000, and this gradient persists after adjusting for age, body weight, race, and lifestyle factors.
 
 This suggests that income is not simply a proxy for individual behaviour, but is independently associated with diabetes risk.
 
@@ -169,7 +169,7 @@ This suggests that income is not simply a proxy for individual behaviour, but is
 #| code-summary: "Curated forest plot"
 
 curated_labels <- c(
-  "age_group75+"                                 = "Age 75+ vs 18–34",
+  "age_group75+"                                 = "Age 75+ vs 18-34",
   "bmi_categoryObese"                            = "Obese vs normal BMI",
   "income_group<$15k"                            = "Income <$15k vs >$100k",
   "race_ethnicityAmerican Indian/Alaskan Native" = "AI/AN vs White",
@@ -190,7 +190,7 @@ curated_df <- or_df |>
       "AI/AN vs White",
       "Asian vs White",
       "Obese vs normal BMI",
-      "Age 75+ vs 18–34"
+      "Age 75+ vs 18-34"
     )),
     direction = if_else(estimate >= 1, "Higher odds of diabetes",
                                        "Lower odds (likely bias or reverse causation)")
@@ -223,8 +223,8 @@ ggplot(curated_df, aes(x = estimate, y = label, color = direction)) +
   )
 ```
 
-Age is the strongest predictor in the model: adults aged 75 and over have `r round(exp(coef(mod)["age_group75+"]), 0)` times the odds of a diabetes diagnosis compared to those aged 18–34. Obesity, income, racial and ethnic background, and physical inactivity are also independently associated with higher risk.
+Age is the strongest predictor in the model: adults aged 75 and over have `r round(exp(coef(mod)["age_group75+"]), 0)` times the odds of a diabetes diagnosis compared to those aged 18-34. Obesity, income, racial and ethnic background, and physical inactivity are also independently associated with higher risk.
 
-Two findings show lower odds but do not reflect protective effects. People without a regular healthcare provider are less likely to be diagnosed regardless of their underlying risk, indicating underdiagnosis. The heavy drinking result likely reflects reverse causation: individuals with chronic illness often reduce alcohol consumption, so current heavy drinkers appear healthier on average than they are.
+Two findings show lower odds, but neither is protective. People without a regular healthcare provider are less likely to be diagnosed whatever their underlying risk, which points to underdiagnosis. The heavy-drinking result likely reflects reverse causation: people with chronic illness often cut back on alcohol, so current heavy drinkers look healthier on average than they are.
 
-These results show that diabetes risk is shaped by a combination of age, body weight, and socioeconomic conditions. While some associations reflect underlying biology, others highlight how access to care and behavioural changes can influence what is observed in the data.
+These results show that diabetes risk is shaped by age, body weight, and socioeconomic conditions together. Some associations reflect underlying biology; others show how access to care and behaviour shape what appears in the data.

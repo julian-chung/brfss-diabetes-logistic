@@ -26,11 +26,11 @@ source(here("R", "plot_theme.R"))  # theme_epi(), scale_fill_epi(), save_fig()
 
 ## Data Pipeline
 
-The raw BRFSS 2024 data were downloaded as a fixed-width file and converted to Parquet using `R/download_raw.R`. The mart was built using DuckDB with four SQL scripts run in sequence: a view over the raw Parquet file, a recode and inclusion-criteria step to produce the analytical dataset, validation checks, and export to Parquet for use in R.
+The raw BRFSS 2024 data were downloaded as a SAS XPT file and converted to Parquet using `R/xpt_to_parquet.R`. The mart was built using DuckDB with four SQL scripts run in sequence: a view over the raw Parquet file, a recode and inclusion-criteria step to produce the analytical dataset, validation checks, and export to Parquet for use in R.
 
 ```{sql}
 --| label: sql-load-raw
---| code-summary: "01 — Create view over raw Parquet file"
+--| code-summary: "01: Create view over raw Parquet file"
 --| eval: false
 
 -- 01_load_raw.sql
@@ -43,7 +43,7 @@ select count(*) as n_rows from brfss_raw;
 
 ```{sql}
 --| label: sql-build-mart
---| code-summary: "02 — Recode variables and apply inclusion criteria"
+--| code-summary: "02: Recode variables and apply inclusion criteria"
 --| eval: false
 
 -- 02_build_mart.sql
@@ -172,7 +172,7 @@ where diabetes is not null;
 
 ```{sql}
 --| label: sql-validation
---| code-summary: "03 — Validation checks"
+--| code-summary: "03: Validation checks"
 --| eval: false
 
 -- 03_validation.sql
@@ -210,7 +210,7 @@ order by bmi_category, diabetes;
 
 ```{sql}
 --| label: sql-export
---| code-summary: "04 — Export to Parquet"
+--| code-summary: "04: Export to Parquet"
 --| eval: false
 
 -- 04_export.sql
@@ -219,7 +219,7 @@ to 'data/processed/analysis_dataset.parquet'
 (format parquet);
 ```
 
-The Parquet file is the mart for analysis — the raw data file stays untouched, and all downstream R code reads from `data/processed/`.
+The Parquet file is the mart for analysis: the raw data file stays untouched, and all downstream R code reads from `data/processed/`.
 
 ---
 
@@ -242,7 +242,7 @@ The analytical dataset contains `r nrow(df)` respondents with a fully observed b
 
 ### Predictor distributions
 
-Understanding the sample composition across predictors helps identify sparse categories, where estimates will be less stable and require cautious interpretation.
+Understanding the sample composition across predictors helps identify sparse categories, where estimates will be less stable.
 
 ```{r}
 #| label: predictor-distributions
@@ -314,7 +314,7 @@ ggplot(dist_data, aes(x = pct, y = level)) +
   )
 ```
 
-The sample skews older and more educated, with adults aged 65 and over accounting for 48% of respondents and college graduates forming the largest education category (42.1%). The BMI distribution is predominantly above the normal-weight threshold, with 69% of respondents falling in the overweight or obese categories, indicating that BMI-related contrasts are well represented in the data. Race and ethnicity show the most analytically consequential imbalance: White respondents account for 73.5% of the sample, while several groups — Pacific Islander, American Indian or Alaska Native, Other/Multiracial, Hispanic, and Asian — each fall below 3%. Estimates for these smaller groups will therefore be less precise and require cautious interpretation.
+The sample skews older and more educated: adults aged 65 and over make up 48% of respondents, and college graduates are the largest education category (42.1%). Most respondents (69%) are overweight or obese, so BMI contrasts are well represented in the data. The most consequential imbalance is in race and ethnicity. White respondents account for 73.5% of the sample, while several groups (Pacific Islander, American Indian or Alaska Native, Other/Multiracial, Hispanic, and Asian) each fall below 3%, so their estimates will be less precise and need cautious interpretation.
 
 ```{r}
 #| label: binary-predictors
@@ -352,7 +352,7 @@ ggplot(binary_data, aes(x = pct, y = label)) +
   )
 ```
 
-All three binary predictors are strongly imbalanced. Heavy drinking is rare (5.9%), so estimates of its association with diabetes rest on a small exposed group. Having a personal doctor (87.6%) and being physically active (76.7%) remain one-sided, limiting contrast and reducing precision in their effect estimates.
+All three binary predictors are strongly imbalanced. Heavy drinking is rare (5.9%), so estimates of its association with diabetes rest on a small exposed group. Having a personal doctor (87.6%) and being physically active (76.7%) are also one-sided, which limits contrast and precision.
 
 ### Outcome prevalence
 
@@ -370,9 +370,9 @@ prev <- df |>
 prev
 ```
 
-`r prev$pct[prev$diabetes == 1]` of respondents (`r format(prev$n[prev$diabetes == 1], big.mark = ",")` of `r format(sum(prev$n), big.mark = ",")`) reported a diabetes diagnosis. The outcome is moderately imbalanced rather than rare, providing sufficient cases for stable estimation while still requiring attention to this imbalance in interpretation.
+`r prev$pct[prev$diabetes == 1]` of respondents (`r format(prev$n[prev$diabetes == 1], big.mark = ",")` of `r format(sum(prev$n), big.mark = ",")`) reported a diabetes diagnosis. The outcome is moderately imbalanced rather than rare: there are enough cases for stable estimation, but the imbalance matters when interpreting results.
 
-### Table 1 — sample characteristics by diabetes status
+### Table 1: Sample characteristics by diabetes status
 
 ```{r}
 #| label: table-one
@@ -423,7 +423,7 @@ df |>
   modify_caption("**Table 1.** Sample characteristics by diabetes status")
 ```
 
-Age and BMI show the strongest gradients: the diabetes group skews substantially older, and obesity is markedly more common (52% vs 30%). Socioeconomic differences follow a similar pattern, with lower income and lower educational attainment more prevalent in the diabetes group. Behavioural and health indicators add further contrasts — lower physical activity, a higher proportion of former smokers, and more frequent poor mental health days — though these likely reflect a mix of upstream risk factors and downstream consequences of disease rather than independent effects. These overlapping relationships will be estimated more precisely in the adjusted model.
+Age and BMI show the strongest gradients: the diabetes group skews substantially older, and obesity is markedly more common (52% vs 30%). Socioeconomic differences follow a similar pattern, with lower income and lower education more prevalent in the diabetes group. Behavioural and health indicators add further contrasts (lower physical activity, more former smokers, and more frequent poor mental health days), though these likely reflect a mix of upstream risk factors and downstream consequences of disease. These overlapping relationships are revisited in the adjusted model.
 
 ---
 
@@ -493,15 +493,15 @@ ggplot(prev_data, aes(x = prev_pct, y = level)) +
   )
 ```
 
-The age gradient climbs from 1.6% in those aged 18–34 to 22.2% in those aged 75+, while the BMI gradient is similarly pronounced, with the obese group at 22.7% compared with 7.6% in the normal-weight group. Socioeconomic gradients are also evident, with higher prevalence in lower income and lower education categories.
+Prevalence climbs from 1.6% at ages 18-34 to 22.2% at 75+, and the BMI gradient is nearly as steep: 22.7% in the obese group versus 7.6% at normal weight. Prevalence also rises as income and education fall.
 
-Behavioural and health indicators show additional differences, including higher prevalence among those reporting 14+ poor mental health days and among former smokers, although these patterns may reflect confounding or changes following diagnosis rather than independent effects. Variation across race and ethnicity is substantial but warrants cautious interpretation due to small sample sizes in several groups.
+Behavioural and health indicators show further differences, including higher prevalence among former smokers and among those reporting 14+ poor mental health days, though these may reflect confounding or changes following diagnosis rather than independent effects. Variation across race and ethnicity is substantial but rests on small samples in several groups.
 
 ---
 
 ## Unadjusted Associations
 
-Each predictor is regressed against the diabetes outcome individually, producing a crude odds ratio (OR) that quantifies the association without controlling for any other variable.
+Diabetes status is regressed on each predictor individually, producing a crude odds ratio (OR) for the association without adjustment for any other variable.
 
 ```{r}
 #| label: uvregression
@@ -561,9 +561,9 @@ df |>
   modify_caption("**Table 2.** Unadjusted odds ratios for diabetes by predictor")
 ```
 
-The age odds ratio rises monotonically from 2.29 in the 35–44 group to 17.2 in those aged 75+, while obesity is associated with 3.58 times the odds of the normal-weight group. Socioeconomic gradients are also evident, with progressively higher odds of diabetes in lower income and lower education categories.
+The age odds ratio rises steadily from 2.29 in the 35-44 group to 17.2 in those aged 75+, and adults with obesity have 3.58 times the odds of those at normal weight. Odds also rise step by step as income and education fall.
 
-Behavioural and health indicators show additional associations, including lower odds among physically active respondents and higher odds among former smokers, though these patterns likely reflect confounding and behavioural changes following diagnosis rather than independent effects. Several variables display clear signs of reverse causation, particularly heavy drinking (OR 0.42) and having a personal doctor (OR 4.29), where the direction of association is more consistent with disease status influencing behaviour or healthcare contact. These crude estimates provide context, but many relationships are likely to attenuate or change after adjustment.
+As in the prevalence plots, the lower odds among physically active respondents and higher odds among former smokers likely reflect confounding and behaviour changes following diagnosis. Heavy drinking (OR 0.42) and having a personal doctor (OR 4.29) show clear signs of reverse causation: the direction of association fits disease status influencing behaviour or healthcare contact. These crude estimates provide context, but many will attenuate or change after adjustment.
 
 ---
 
@@ -577,15 +577,15 @@ The SQL pipeline recoded "don't know", "refused", and "not applicable" responses
 miss_summary(df)
 ```
 
-Income group stands out with 25.5% missingness — the only variable where nonresponse is large enough to meaningfully reduce the effective sample under complete-case analysis. Most remaining variables fall below 10%, with heavy drinking (10.2%) and BMI category (9.3%) contributing some additional row loss. Whether income nonresponse is random or related to diabetes risk is unclear, but its scale is important to consider when interpreting results from complete-case models.
+Income group stands out with 25.5% missingness, the only variable where nonresponse is large enough to meaningfully shrink the complete-case sample. Most other variables fall below 10%, with heavy drinking (10.2%) and BMI category (9.3%) adding some row loss. Whether income nonresponse is random or related to diabetes risk is unclear, but its scale matters when interpreting complete-case results.
 
 ---
 
 ## Summary
 
-Age and BMI are the most consistent signals, with strong, monotonic gradients across the descriptive analyses. Socioeconomic predictors show clear unadjusted associations, while income group stands out with substantial missingness (25.5%), reducing the effective sample under complete-case analysis. Several behavioural variables, particularly heavy drinking and having a personal doctor, show patterns more consistent with reverse causation than independent effects.
+Age and BMI are the most consistent signals, with strong, monotonic gradients across the descriptive analyses. Socioeconomic predictors show clear unadjusted associations, while income group carries substantial missingness (25.5%) that shrinks the complete-case sample. Several behavioural variables, particularly heavy drinking and having a personal doctor, show patterns more consistent with reverse causation than independent effects.
 
-The adjusted model will help separate these overlapping relationships and identify which associations persist after controlling for confounding.
+The adjusted model will help separate these overlapping relationships and show which associations persist.
 
 ---
 
